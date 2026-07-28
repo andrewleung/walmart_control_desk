@@ -121,6 +121,17 @@ tr:last-child td { border-bottom: 0; }
 .blocked-calculation { border-color: #e4bab5; background: var(--red-soft); color: var(--red); }
 .blocked-calculation p { margin: 3px 0 0; }
 .row-detail-link { display: block; margin-top: 5px; color: var(--green); font-size: .66rem; font-weight: 750; text-decoration: none; }
+.analysis-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.analysis-grid article { position: relative; padding: 18px 18px 18px 54px; background: #fbfcfa; border: 1px solid var(--line); border-radius: 12px; }
+.analysis-grid h3 { margin: 0 0 8px; font-size: .96rem; }
+.analysis-grid b { display: block; color: var(--ink); font-size: .92rem; }
+.analysis-grid p { margin: 7px 0; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+.analysis-grid small { color: #45564b; line-height: 1.4; }
+.analysis-letter { position: absolute; left: 16px; top: 16px; width: 25px; height: 25px; display: grid; place-items: center; color: white; background: var(--green); border-radius: 50%; font-size: .72rem; font-weight: 800; }
+.analysis-grid .analysis-missing { color: #996515; }
+@media (max-width: 760px) { .analysis-grid { grid-template-columns: 1fr; } }
+.mapping-panel .panel-head p { max-width: 760px; margin: 6px 0 0; color: var(--muted); font-size: .82rem; }
+.mapping-table td:first-child { min-width: 260px; overflow-wrap: anywhere; }
 form p { display: grid; gap: 7px; margin: 0 0 17px; }
 label { font-size: .84rem; font-weight: 750; }
 input, select, textarea { width: 100%; padding: 11px 12px; border: 1px solid #c6cbc4; border-radius: 9px; background: white; color: var(--ink); font: inherit; }

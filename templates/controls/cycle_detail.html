@@ -31,7 +31,7 @@
 </section>
 
 <section class="panel">
-  <div class="panel-head"><div><span class="eyebrow">INPUT REGISTER</span><h2>Nine control packages</h2></div>{% if not demo_read_only %}<a class="text-link" href="{% url 'controls:package_upload' cycle.pk %}">Upload package →</a>{% endif %}</div>
+  <div class="panel-head"><div><span class="eyebrow">INPUT REGISTER</span><h2>Nine control packages</h2></div><div><a class="text-link" href="{% url 'controls:package_mapping' %}">View field mapping</a>{% if not demo_read_only %}<a class="text-link" href="{% url 'controls:package_upload' cycle.pk %}">Upload package →</a>{% endif %}</div></div>
   <div class="package-grid">
     {% for package in packages %}
     <article class="package-card {% if package.upload %}{{ package.upload.status|lower }}{% else %}missing{% endif %}">

@@ -8,6 +8,7 @@ PACKAGE_TEMPLATE_SCHEMAS = {
         ("store_on_hand_quantity_this_year", True, "Current store on-hand units"),
         ("store_on_order_quantity_this_year", False, "Current store on-order units"),
         ("repl_instock_percentage_this_year", False, "In-stock rate as a decimal, for example 0.91"),
+        ("actual_order_quantity_last_4_weeks", False, "Actual Walmart orders across the most recent four completed weeks"),
     ],
     2: [
         ("vendor_stock_id", True, "Supplier SKU or vendor stock identifier"),
@@ -21,6 +22,7 @@ PACKAGE_TEMPLATE_SCHEMAS = {
         ("fc_number", True, "Walmart fulfillment-center number"),
         ("fc_on_hand_quantity", True, "Physical on-hand units at the fulfillment center"),
         ("fc_available_quantity", True, "Units available for customer demand"),
+        ("inventory_date", False, "Inventory snapshot date in YYYY-MM-DD format"),
     ],
     4: [
         ("wm_item_nbr", True, "Walmart item number; must match Package 1"),
@@ -33,6 +35,8 @@ PACKAGE_TEMPLATE_SCHEMAS = {
         ("item_name", False, "Item description"),
         ("order_each_quantity", True, "Forecast order quantity in eaches"),
         ("sched_arvl_dt", True, "Scheduled arrival date in YYYY-MM-DD format"),
+        ("walmart_calendar_week", False, "Walmart year-week represented by this forecast row"),
+        ("supply_plan_each_quantity", False, "Forward supply-plan units for the Walmart week"),
     ],
     6: [
         ("po_number", True, "Walmart purchase-order number"),
@@ -44,6 +48,9 @@ PACKAGE_TEMPLATE_SCHEMAS = {
         ("received_quantity", True, "Quantity received by Walmart"),
         ("unreceived_quantity", True, "Open quantity not yet received"),
         ("otif_status", False, "Current OTIF status or exception"),
+        ("otif_on_time_flag", False, "YES when the PO line met Walmart's on-time measure"),
+        ("otif_in_full_flag", False, "YES when the PO line met Walmart's in-full measure"),
+        ("otif_exception_reason", False, "Late, short, routing, appointment, or other root-cause detail"),
     ],
     7: [
         ("vendor_stock_id", True, "Supplier SKU or vendor stock identifier"),
@@ -62,6 +69,9 @@ PACKAGE_TEMPLATE_SCHEMAS = {
         ("expected_rjw_available_date", True, "Expected RJW availability date in YYYY-MM-DD format"),
         ("on_time_for_mabd", True, "YES if available for the applicable MABD; otherwise NO"),
         ("shipment_reference", False, "Container, bill of lading, or shipment reference"),
+        ("etd", False, "Estimated departure date in YYYY-MM-DD format"),
+        ("eta", False, "Estimated arrival date in YYYY-MM-DD format"),
+        ("customs_clearance_date", False, "Expected customs-clearance date in YYYY-MM-DD format"),
     ],
     9: [
         ("walmart_week", True, "Walmart year-week in YYYYYY format, for example 202630"),
@@ -71,5 +81,23 @@ PACKAGE_TEMPLATE_SCHEMAS = {
         ("required_action", True, "Action required from Jessica or the responsible source"),
         ("approved_buffer_quantity", True, "Approved management buffer in units; enter 0 if none"),
         ("status", True, "OPEN, RESOLVED, or MONITOR"),
+        ("modular_set_week", False, "Walmart week of the modular set"),
+        ("system_order_start_week", False, "Expected system-order start week"),
+        ("modular_set_date", False, "Confirmed or planned modular-set date"),
+        ("traited_store_count", False, "Current authorized or traited store count"),
+        ("prior_traited_store_count", False, "Comparable prior traited-store count"),
+        ("initial_fill_units_per_store", False, "Explicit planning assumption; leave blank unless approved"),
     ],
+}
+
+PACKAGE_ANALYSIS_USE = {
+    1: "Store position, in-stock, recent actual orders and the forecast-exception baseline.",
+    2: "Comparable eCommerce sales rate used in SKU-level stock coverage.",
+    3: "FC-level on-hand and available inventory, FC count and eCommerce weeks of supply.",
+    4: "Weekly store-demand forecast retained separately from orders and supply plans.",
+    5: "Weekly order forecast, scheduled arrivals and forward supply-plan exceptions.",
+    6: "Open commitments, MABDs, receipts and PO-line OTIF performance and causes.",
+    7: "Finished goods, work in process, completion dates and factory release milestones.",
+    8: "RJW availability, allocations, holds, inbound timing, ETD, ETA and customs milestones.",
+    9: "Modular timing, traited-store changes, buffer assumptions and exception explanations.",
 }

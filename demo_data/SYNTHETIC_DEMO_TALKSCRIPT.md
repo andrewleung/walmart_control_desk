@@ -11,7 +11,7 @@ Start only the synthetic complete-workflow demonstration:
 Open **Synthetic complete workflow demo**. Confirm that the amber notice says
 **SYNTHETIC DEMONSTRATION DATA — NOT FOR OPERATIONAL USE**.
 
-## Suggested 6–8 minute talk script
+## Suggested 8–10 minute talk script
 
 ### 1. Purpose
 
@@ -66,7 +66,30 @@ packages and therefore produces quantified results. A negative gap or timing
 exception does not automatically authorize a response; it identifies the item
 that requires Jessica's documented recommendation and follow-up.”
 
-### 6. Record and export
+### 6. Six decision-support analyses
+
+Open **View calculation** for an item and scroll to **Six forward-decision
+analyses**.
+
+“The same nine packages now support six distinct reviews: total supply coverage,
+the forward-plan variance against recent orders, PO-line OTIF recovery, backward
+modular milestones, incremental traited-store loading, and FC-level eCommerce
+coverage. Every card distinguishes calculated evidence from confirmation still
+required.”
+
+Point out that the synthetic example shows:
+
+- last-four-week actual orders versus the next-week supply plan;
+- on-time and in-full percentages with PO-line exception counts;
+- factory release, ETD, ETA and expected warehouse availability;
+- the expected system-order week and modular-set week;
+- 210 incremental stores and an explicitly illustrative 630-unit initial fill;
+- SKU-level eCommerce weeks of supply and FC count.
+
+“These outputs are potential recommendations for review. They do not constitute
+production, purchase, or shipment authorization.”
+
+### 7. Record and export
 
 Open an item, show the recommendation and decision-note fields, then return to
 the cycle.
@@ -74,7 +97,10 @@ the cycle.
 “The results can be exported as a spreadsheet or printed to PDF. Both outputs
 retain the synthetic-data warning.”
 
-### 7. Closing
+The Excel export includes a **Decision Support** sheet containing the underlying
+measures.
+
+### 8. Closing
 
 “The demonstration illustrates the intended end state: one dated schedule that
 separates covered demand, shortages and late supply, while preserving the source

@@ -38,6 +38,10 @@ def _date(value):
     return None
 
 
+def _yes(value):
+    return _clean(value).upper() in {"YES", "Y", "TRUE", "1", "ON TIME", "IN FULL", "PASS"}
+
+
 def _iter_rows(path):
     path = Path(path)
     if path.suffix.lower() == ".csv":
@@ -145,6 +149,10 @@ def _package_1(upload):
         value = source.get("repl_instock_percentage_this_year")
         if isinstance(value, (int, float)):
             instock[stock_id].append(float(value))
+        if source.get("actual_order_quantity_last_4_weeks") not in (None, ""):
+            grouped[stock_id]["actual_orders_l4"] += _number(
+                source.get("actual_order_quantity_last_4_weeks")
+            )
     missing = sorted(required - observed)
     if missing:
         raise ValueError("Missing required columns: " + ", ".join(missing))
@@ -199,6 +207,8 @@ def _recalculate_usable_supply(row):
 
 def _package_3(upload):
     grouped = defaultdict(float)
+    on_hand = defaultdict(float)
+    facilities = defaultdict(set)
     count = 0
     observed = set()
     for source in _iter_rows(upload.source_file.path):
@@ -207,12 +217,18 @@ def _package_3(upload):
         stock_id = _clean(source.get("vendor_stock_id"))
         if stock_id:
             grouped[stock_id] += _number(source.get("fc_available_quantity"))
+            on_hand[stock_id] += _number(source.get("fc_on_hand_quantity"))
+            facilities[stock_id].add(_clean(source.get("fc_number")))
     needed = {"vendor_stock_id", "fc_number", "fc_on_hand_quantity", "fc_available_quantity"}
     if missing := sorted(needed - observed):
         raise ValueError("Missing required columns: " + ", ".join(missing))
     for stock_id, total in grouped.items():
         row = _row(upload.cycle, _sku(stock_id))
         row.ecomm_available_inventory = Decimal(str(round(total, 4)))
+        row.ecomm_on_hand_inventory = Decimal(str(round(on_hand[stock_id], 4)))
+        row.ecomm_fc_count = len({value for value in facilities[stock_id] if value})
+        if row.ecomm_units:
+            row.ecomm_weeks_of_supply = row.ecomm_on_hand_inventory / row.ecomm_units
         _recalculate_usable_supply(row)
         row.save()
     return count
@@ -247,6 +263,7 @@ def _package_4(upload):
 def _package_5(upload):
     grouped = defaultdict(float)
     arrivals = defaultdict(list)
+    supply_plan = defaultdict(lambda: defaultdict(float))
     identity = {}
     count = 0
     observed = set()
@@ -261,6 +278,9 @@ def _package_5(upload):
             _clean(source.get("wm_item_nbr")),
         )
         grouped[stock_id] += _number(source.get("order_each_quantity"))
+        week = _clean(source.get("walmart_calendar_week"))
+        if week and source.get("supply_plan_each_quantity") not in (None, ""):
+            supply_plan[stock_id][week] += _number(source.get("supply_plan_each_quantity"))
         if arrival := _date(source.get("sched_arvl_dt")):
             arrivals[stock_id].append(arrival)
     needed = {"vendor_stock_id", "order_each_quantity", "sched_arvl_dt"}
@@ -269,6 +289,9 @@ def _package_5(upload):
     for stock_id, total in grouped.items():
         row = _row(upload.cycle, _sku(stock_id, *identity[stock_id]))
         row.order_forecast_total = Decimal(str(round(total, 4)))
+        if supply_plan[stock_id]:
+            first_week = sorted(supply_plan[stock_id])[0]
+            row.next_week_supply_plan = Decimal(str(round(supply_plan[stock_id][first_week], 4)))
         if arrivals[stock_id]:
             row.first_forecast_arrival = min(arrivals[stock_id])
             row.last_forecast_arrival = max(arrivals[stock_id])
@@ -279,6 +302,7 @@ def _package_5(upload):
 def _package_6(upload):
     commitments = defaultdict(float)
     mabds = defaultdict(list)
+    otif = defaultdict(lambda: {"rows": 0, "on_time": 0, "in_full": 0, "exceptions": 0})
     count = 0
     observed = set()
     for source in _iter_rows(upload.source_file.path):
@@ -288,6 +312,12 @@ def _package_6(upload):
         if not stock_id:
             continue
         commitments[stock_id] += _number(source.get("unreceived_quantity"))
+        if source.get("otif_on_time_flag") not in (None, ""):
+            otif[stock_id]["rows"] += 1
+            otif[stock_id]["on_time"] += int(_yes(source.get("otif_on_time_flag")))
+            otif[stock_id]["in_full"] += int(_yes(source.get("otif_in_full_flag")))
+            if _clean(source.get("otif_exception_reason")):
+                otif[stock_id]["exceptions"] += 1
         if value := _date(source.get("mabd")):
             mabds[stock_id].append(value)
     needed = {
@@ -301,12 +331,20 @@ def _package_6(upload):
         row.current_commitments = Decimal(str(round(total, 4)))
         if mabds[stock_id]:
             row.next_mabd = min(mabds[stock_id])
+        if otif[stock_id]["rows"]:
+            denominator = Decimal(otif[stock_id]["rows"])
+            row.otif_on_time_percent = Decimal(otif[stock_id]["on_time"]) / denominator
+            row.otif_in_full_percent = Decimal(otif[stock_id]["in_full"]) / denominator
+            row.otif_exception_count = otif[stock_id]["exceptions"]
         row.save()
     return count
 
 
 def _package_7(upload):
     available = defaultdict(float)
+    wip = defaultdict(float)
+    completions = defaultdict(list)
+    releases = defaultdict(list)
     count = 0
     observed = set()
     for source in _iter_rows(upload.source_file.path):
@@ -315,6 +353,11 @@ def _package_7(upload):
         stock_id = _clean(source.get("vendor_stock_id"))
         if stock_id:
             available[stock_id] += _number(source.get("finished_goods_available_quantity"))
+            wip[stock_id] += _number(source.get("work_in_process_quantity"))
+            if value := _date(source.get("planned_completion_date")):
+                completions[stock_id].append(value)
+            if value := _date(source.get("release_date")):
+                releases[stock_id].append(value)
     needed = {
         "vendor_stock_id", "finished_goods_available_quantity",
         "work_in_process_quantity", "planned_completion_date", "release_date",
@@ -324,6 +367,9 @@ def _package_7(upload):
     for stock_id, total in available.items():
         row = _row(upload.cycle, _sku(stock_id))
         row.factory_available_inventory = Decimal(str(round(total, 4)))
+        row.work_in_process_quantity = Decimal(str(round(wip[stock_id], 4)))
+        row.next_factory_completion = min(completions[stock_id]) if completions[stock_id] else None
+        row.next_factory_release = min(releases[stock_id]) if releases[stock_id] else None
         _recalculate_usable_supply(row)
         row.save()
     return count
@@ -334,6 +380,12 @@ def _package_8(upload):
     on_time = defaultdict(float)
     late = defaultdict(float)
     inbound_dates = defaultdict(list)
+    physical = defaultdict(float)
+    allocated = defaultdict(float)
+    held = defaultdict(float)
+    etds = defaultdict(list)
+    etas = defaultdict(list)
+    customs = defaultdict(list)
     count = 0
     observed = set()
     for source in _iter_rows(upload.source_file.path):
@@ -343,6 +395,9 @@ def _package_8(upload):
         if not stock_id:
             continue
         available[stock_id] += _number(source.get("rjw_available_quantity"))
+        physical[stock_id] += _number(source.get("rjw_physical_quantity"))
+        allocated[stock_id] += _number(source.get("rjw_allocated_quantity"))
+        held[stock_id] += _number(source.get("rjw_held_quantity"))
         quantity = _number(source.get("inbound_quantity"))
         if _clean(source.get("on_time_for_mabd")).upper() in {"YES", "Y", "TRUE", "1"}:
             on_time[stock_id] += quantity
@@ -350,6 +405,11 @@ def _package_8(upload):
             late[stock_id] += quantity
         if value := _date(source.get("expected_rjw_available_date")):
             inbound_dates[stock_id].append(value)
+        for source_name, destination in [
+            ("etd", etds), ("eta", etas), ("customs_clearance_date", customs)
+        ]:
+            if value := _date(source.get(source_name)):
+                destination[stock_id].append(value)
     needed = {
         "vendor_stock_id", "rjw_physical_quantity", "rjw_available_quantity",
         "rjw_allocated_quantity", "rjw_held_quantity", "inbound_quantity",
@@ -360,10 +420,16 @@ def _package_8(upload):
     for stock_id in available:
         row = _row(upload.cycle, _sku(stock_id))
         row.rjw_available_inventory = Decimal(str(round(available[stock_id], 4)))
+        row.rjw_physical_inventory = Decimal(str(round(physical[stock_id], 4)))
+        row.rjw_allocated_inventory = Decimal(str(round(allocated[stock_id], 4)))
+        row.rjw_held_inventory = Decimal(str(round(held[stock_id], 4)))
         row.confirmed_on_time_inbound = Decimal(str(round(on_time[stock_id], 4)))
         row.late_inbound_quantity = Decimal(str(round(late[stock_id], 4)))
         if inbound_dates[stock_id]:
             row.next_inbound_available = min(inbound_dates[stock_id])
+        row.next_etd = min(etds[stock_id]) if etds[stock_id] else None
+        row.next_eta = min(etas[stock_id]) if etas[stock_id] else None
+        row.next_customs_clearance = min(customs[stock_id]) if customs[stock_id] else None
         _recalculate_usable_supply(row)
         row.save()
     return count
@@ -381,6 +447,23 @@ def _package_9(upload):
         row = _row(upload.cycle, _sku(stock_id))
         row.approved_buffer = Decimal(str(round(_number(source.get("approved_buffer_quantity")), 4)))
         row.recommendation = _clean(source.get("required_action"))
+        row.modular_set_week = _clean(source.get("modular_set_week"))
+        row.system_order_start_week = _clean(source.get("system_order_start_week"))
+        row.modular_set_date = _date(source.get("modular_set_date"))
+        if source.get("traited_store_count") not in (None, ""):
+            row.traited_store_count = int(_number(source.get("traited_store_count")))
+        if source.get("prior_traited_store_count") not in (None, ""):
+            row.prior_traited_store_count = int(_number(source.get("prior_traited_store_count")))
+        if row.traited_store_count is not None and row.prior_traited_store_count is not None:
+            row.incremental_store_count = row.traited_store_count - row.prior_traited_store_count
+        if source.get("initial_fill_units_per_store") not in (None, ""):
+            row.initial_fill_units_per_store = Decimal(
+                str(round(_number(source.get("initial_fill_units_per_store")), 4))
+            )
+        if row.incremental_store_count is not None and row.initial_fill_units_per_store is not None:
+            row.illustrative_initial_fill = (
+                Decimal(row.incremental_store_count) * row.initial_fill_units_per_store
+            )
         row.save()
     needed = {
         "walmart_week", "vendor_stock_id", "context_type", "explanation",
@@ -427,6 +510,39 @@ def run_controls(cycle):
             required_action="Add current commentary and exception explanations.",
         )
     for row in cycle.rows.select_related("sku"):
+        if row.actual_orders_l4 is not None and row.next_week_supply_plan is not None:
+            weekly_average = row.actual_orders_l4 / Decimal("4")
+            row.forecast_variance_units = row.next_week_supply_plan - weekly_average
+            row.forecast_variance_percent = (
+                row.forecast_variance_units / weekly_average if weekly_average else None
+            )
+            if row.forecast_variance_units < 0:
+                ExceptionRecord.objects.create(
+                    cycle=cycle, sku=row.sku, code="FORECAST_BELOW_RECENT_ORDERS",
+                    severity="HIGH",
+                    title=f"{row.sku.vendor_stock_id}: forward supply plan is below recent orders",
+                    effect=(
+                        f"Next-week supply plan is {abs(row.forecast_variance_units):,.0f} units "
+                        "below the last-four-week average order rate."
+                    ),
+                    required_action=(
+                        "Confirm whether recent orders include recovery, modular loading, or other "
+                        "one-time quantities before changing the plan."
+                    ),
+                )
+        if row.otif_ready and (
+            row.otif_on_time_percent < Decimal("0.90")
+            or row.otif_in_full_percent < Decimal("0.90")
+        ):
+            ExceptionRecord.objects.create(
+                cycle=cycle, sku=row.sku, code="OTIF_BELOW_TARGET", severity="HIGH",
+                title=f"{row.sku.vendor_stock_id}: OTIF performance is below the review threshold",
+                effect=(
+                    f"On-time is {row.otif_on_time_percent * 100:.1f}% and "
+                    f"in-full is {row.otif_in_full_percent * 100:.1f}%."
+                ),
+                required_action="Review PO-line exception causes and assign corrective actions.",
+            )
         if row.late_inbound_quantity and row.late_inbound_quantity > 0:
             ExceptionRecord.objects.create(
                 cycle=cycle, sku=row.sku, code="INBOUND_AFTER_MABD", severity="HIGH",

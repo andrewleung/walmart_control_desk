@@ -83,6 +83,33 @@ class ControlGateTests(TestCase):
         )
         self.assertIn("Instructions", book.sheetnames)
         book.close()
+        mapping = self.client.get(reverse("controls:package_mapping"))
+        self.assertEqual(mapping.status_code, 200)
+        self.assertContains(mapping, "actual_order_quantity_last_4_weeks")
+        self.assertContains(mapping, "otif_exception_reason")
+        self.assertContains(mapping, "system_order_start_week")
+
+    def test_expanded_decision_support_calculations_render(self):
+        self.row.actual_orders_l4 = Decimal("400")
+        self.row.next_week_supply_plan = Decimal("60")
+        self.row.otif_on_time_percent = Decimal("0.44")
+        self.row.otif_in_full_percent = Decimal("0.569")
+        self.row.ecomm_units = Decimal("35")
+        self.row.ecomm_on_hand_inventory = Decimal("1831")
+        self.row.ecomm_weeks_of_supply = Decimal("52.314")
+        self.row.traited_store_count = 1206
+        self.row.prior_traited_store_count = 996
+        self.row.incremental_store_count = 210
+        self.row.initial_fill_units_per_store = Decimal("3")
+        self.row.illustrative_initial_fill = Decimal("630")
+        self.row.save()
+        run_controls(self.cycle)
+        self.row.refresh_from_db()
+        self.assertEqual(self.row.forecast_variance_units, Decimal("-40"))
+        detail = self.client.get(reverse("controls:update_decision", args=[self.row.pk]))
+        self.assertContains(detail, "Six forward-decision analyses")
+        self.assertContains(detail, "52.3 weeks")
+        self.assertContains(detail, "210 incremental stores")
 
     @override_settings(DEMO_READ_ONLY=True, SYNTHETIC_ONLY=True)
     def test_public_demo_hides_real_cycle_and_blocks_changes(self):

@@ -46,14 +46,11 @@ class Command(BaseCommand):
         cycle.is_synthetic = True
         cycle.notes = "Made-up, internally consistent demonstration data. Not for operational use."
         cycle.save()
+        cycle.uploads.all().delete()
+        cycle.rows.all().delete()
+        cycle.exceptions.all().delete()
 
         for package_number, filename in sources:
-            existing = cycle.uploads.filter(
-                package_number=package_number, original_name=filename, status="POPULATED"
-            ).first()
-            if existing:
-                self.stdout.write(f"Package {package_number} already populated.")
-                continue
             path = source_root / filename
             with path.open("rb") as handle:
                 upload = PackageUpload(

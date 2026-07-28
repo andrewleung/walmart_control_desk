@@ -13,7 +13,7 @@ from openpyxl.utils import get_column_letter
 from .forms import CycleForm, DecisionForm, UploadForm
 from .models import ControlCycle, PackageUpload, ReconciliationRow
 from .services import process_upload, run_controls
-from .template_schemas import PACKAGE_TEMPLATE_SCHEMAS
+from .template_schemas import PACKAGE_ANALYSIS_USE, PACKAGE_TEMPLATE_SCHEMAS
 
 
 def dashboard(request):
@@ -123,6 +123,20 @@ def package_template(request, package_number):
     return response
 
 
+def package_mapping(request):
+    labels = dict(PackageUpload.PACKAGE_CHOICES)
+    packages = [
+        {
+            "number": number,
+            "label": labels[number],
+            "analysis_use": PACKAGE_ANALYSIS_USE[number],
+            "fields": PACKAGE_TEMPLATE_SCHEMAS[number],
+        }
+        for number in labels
+    ]
+    return render(request, "controls/package_mapping.html", {"packages": packages})
+
+
 @require_POST
 def run_reconciliation(request, pk):
     if settings.DEMO_READ_ONLY:
@@ -201,6 +215,35 @@ def export_excel(request, pk):
             item.severity, item.sku.vendor_stock_id if item.sku else "", item.code,
             item.title, item.effect, item.required_action, item.status, item.note,
         ])
+    decision = book.create_sheet("Decision Support")
+    decision_headers = [
+        "SKU", "L4 Actual Orders", "Next-week Supply Plan", "Variance Units",
+        "Variance Percent", "OTIF On-time", "OTIF In-full", "OTIF Exceptions",
+        "eComm On Hand", "eComm FC Count", "eComm Weeks of Supply",
+        "WIP", "Factory Release", "ETD", "ETA", "Customs Clearance",
+        "Modular Set Week", "System-order Start Week", "Prior Traited Stores",
+        "Current Traited Stores", "Incremental Stores", "Initial Fill / Store",
+        "Illustrative Initial Fill",
+    ]
+    decision.append(decision_headers)
+    for cell in decision[1]:
+        cell.fill = PatternFill("solid", fgColor="17365D")
+        cell.font = Font(color="FFFFFF", bold=True)
+    for row in cycle.rows.select_related("sku"):
+        decision.append([
+            row.sku.vendor_stock_id, row.actual_orders_l4, row.next_week_supply_plan,
+            row.forecast_variance_units, row.forecast_variance_percent,
+            row.otif_on_time_percent, row.otif_in_full_percent, row.otif_exception_count,
+            row.ecomm_on_hand_inventory, row.ecomm_fc_count, row.ecomm_weeks_of_supply,
+            row.work_in_process_quantity, row.next_factory_release, row.next_etd, row.next_eta,
+            row.next_customs_clearance, row.modular_set_week, row.system_order_start_week,
+            row.prior_traited_store_count, row.traited_store_count, row.incremental_store_count,
+            row.initial_fill_units_per_store, row.illustrative_initial_fill,
+        ])
+    decision.freeze_panes = "A2"
+    decision.auto_filter.ref = decision.dimensions
+    for column in range(1, len(decision_headers) + 1):
+        decision.column_dimensions[get_column_letter(column)].width = 20
     output = BytesIO()
     book.save(output)
     response = HttpResponse(

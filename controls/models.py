@@ -94,22 +94,49 @@ class ReconciliationRow(models.Model):
     store_on_hand = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     store_on_order = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     replen_instock = models.DecimalField(max_digits=8, decimal_places=6, null=True, blank=True)
+    actual_orders_l4 = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     ecomm_units = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     ecomm_sales = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     forecast_demand_4w = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     forecast_demand_13w = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     order_forecast_total = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    next_week_supply_plan = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    forecast_variance_units = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    forecast_variance_percent = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
     first_forecast_arrival = models.DateField(null=True, blank=True)
     last_forecast_arrival = models.DateField(null=True, blank=True)
     next_mabd = models.DateField(null=True, blank=True)
+    otif_on_time_percent = models.DecimalField(max_digits=8, decimal_places=6, null=True, blank=True)
+    otif_in_full_percent = models.DecimalField(max_digits=8, decimal_places=6, null=True, blank=True)
+    otif_exception_count = models.PositiveIntegerField(null=True, blank=True)
     ecomm_available_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    ecomm_on_hand_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    ecomm_fc_count = models.PositiveIntegerField(null=True, blank=True)
+    ecomm_weeks_of_supply = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     factory_available_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    work_in_process_quantity = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    next_factory_completion = models.DateField(null=True, blank=True)
+    next_factory_release = models.DateField(null=True, blank=True)
     rjw_available_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    rjw_physical_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    rjw_allocated_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    rjw_held_inventory = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     current_commitments = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     usable_supply = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     confirmed_on_time_inbound = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     late_inbound_quantity = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     next_inbound_available = models.DateField(null=True, blank=True)
+    next_etd = models.DateField(null=True, blank=True)
+    next_eta = models.DateField(null=True, blank=True)
+    next_customs_clearance = models.DateField(null=True, blank=True)
+    traited_store_count = models.PositiveIntegerField(null=True, blank=True)
+    prior_traited_store_count = models.PositiveIntegerField(null=True, blank=True)
+    incremental_store_count = models.IntegerField(null=True, blank=True)
+    initial_fill_units_per_store = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    illustrative_initial_fill = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
+    modular_set_week = models.CharField(max_length=6, blank=True)
+    system_order_start_week = models.CharField(max_length=6, blank=True)
+    modular_set_date = models.DateField(null=True, blank=True)
     approved_buffer = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     projected_ending_supply = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
     projected_gap = models.DecimalField(max_digits=16, decimal_places=2, null=True, blank=True)
@@ -141,6 +168,28 @@ class ReconciliationRow(models.Model):
             self.usable_supply,
             self.confirmed_on_time_inbound,
         ])
+
+    @property
+    def forecast_exception_ready(self):
+        return self.actual_orders_l4 is not None and self.next_week_supply_plan is not None
+
+    @property
+    def otif_ready(self):
+        return self.otif_on_time_percent is not None and self.otif_in_full_percent is not None
+
+    @property
+    def otif_on_time_display(self):
+        return self.otif_on_time_percent * 100 if self.otif_on_time_percent is not None else None
+
+    @property
+    def otif_in_full_display(self):
+        return self.otif_in_full_percent * 100 if self.otif_in_full_percent is not None else None
+
+    @property
+    def modular_ready(self):
+        return bool(self.modular_set_week or self.modular_set_date) and bool(
+            self.next_factory_release or self.next_etd or self.next_eta or self.next_inbound_available
+        )
 
 
 class ExceptionRecord(models.Model):

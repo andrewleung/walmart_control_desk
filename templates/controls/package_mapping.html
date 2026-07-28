@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Package field mapping · Walmart Control Desk{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back" href="{% url 'controls:dashboard' %}">← Control cycles</a>
+    <div class="eyebrow">CONTROL DESIGN</div>
+    <h1>Nine-package field mapping</h1>
+    <p>The mapping and downloadable templates use the same field definitions. Required means the column must remain present; optional decision fields become confirmation-required when omitted.</p>
+  </div>
+</div>
+{% for package in packages %}
+<section class="panel mapping-panel" id="package-{{ package.number }}">
+  <div class="panel-head">
+    <div><span class="eyebrow">P{{ package.number|stringformat:"02d" }}</span><h2>{{ package.label }}</h2><p>{{ package.analysis_use }}</p></div>
+    <a class="button ghost" href="{% url 'controls:package_template' package.number %}">Download blank template</a>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table mapping-table">
+      <thead><tr><th>Upload column</th><th>Required?</th><th>Meaning and format</th></tr></thead>
+      <tbody>{% for column, required, guidance in package.fields %}
+      <tr><td><b>{{ column }}</b></td><td>{% if required %}<span class="badge investigate">Required</span>{% else %}<span class="badge">Optional</span>{% endif %}</td><td>{{ guidance }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

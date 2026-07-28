@@ -51,6 +51,61 @@
   {% endif %}
 </section>
 
+<section class="panel">
+  <div class="panel-head"><div><span class="eyebrow">DECISION SUPPORT</span><h2>Six forward-decision analyses</h2></div></div>
+  <div class="analysis-grid">
+    <article>
+      <span class="analysis-letter">A</span><h3>Supply coverage</h3>
+      {% if row.projected_gap != None %}
+      <b>{{ row.projected_gap|floatformat:0 }} units after commitments and buffer</b>
+      <p>Usable supply and on-time inbound have been reconciled against current commitments.</p>
+      <small>Potential recommendation: {% if row.projected_gap < 0 %}investigate confirmed coverage before authorizing additional supply.{% else %}monitor the surplus before authorizing replenishment.{% endif %}</small>
+      {% else %}<b class="analysis-missing">Confirmation required</b><p>Usable supply, inbound, or commitments are incomplete.</p>{% endif %}
+    </article>
+    <article>
+      <span class="analysis-letter">B</span><h3>Forecast exception</h3>
+      {% if row.forecast_exception_ready %}
+      <b>{{ row.forecast_variance_units|floatformat:0 }} units vs recent weekly orders</b>
+      <p>Next supply plan {{ row.next_week_supply_plan|floatformat:0 }}; L4 weekly average {% widthratio row.actual_orders_l4 4 1 %}.</p>
+      <small>Potential recommendation: explain material gaps; do not automatically override either signal.</small>
+      {% else %}<b class="analysis-missing">Confirmation required</b><p>L4 actual orders or next-week supply plan is missing.</p>{% endif %}
+    </article>
+    <article>
+      <span class="analysis-letter">C</span><h3>OTIF recovery</h3>
+      {% if row.otif_ready %}
+      <b>{{ row.otif_on_time_display|floatformat:1 }}% on-time · {{ row.otif_in_full_display|floatformat:1 }}% in-full</b>
+      <p>{{ row.otif_exception_count|default:0 }} PO-line exceptions require root-cause review.</p>
+      <small>Potential recommendation: assign corrective action by PO line and exception cause.</small>
+      {% else %}<b class="analysis-missing">Confirmation required</b><p>PO-line on-time and in-full flags are missing.</p>{% endif %}
+    </article>
+    <article>
+      <span class="analysis-letter">D</span><h3>Modular readiness</h3>
+      {% if row.modular_ready %}
+      <b>Set {{ row.modular_set_week|default:"date recorded" }} · orders {{ row.system_order_start_week|default:"not confirmed" }}</b>
+      <p>Release {{ row.next_factory_release|date:"d M Y"|default:"—" }} · ETD {{ row.next_etd|date:"d M Y"|default:"—" }} · ETA {{ row.next_eta|date:"d M Y"|default:"—" }}.</p>
+      <small>Potential recommendation: review the backward milestone chain; expected order timing is not a confirmed PO.</small>
+      {% else %}<b class="analysis-missing">Confirmation required</b><p>Modular timing or logistics milestones are incomplete.</p>{% endif %}
+    </article>
+    <article>
+      <span class="analysis-letter">E</span><h3>Expanded distribution</h3>
+      {% if row.incremental_store_count != None %}
+      <b>{{ row.incremental_store_count }} incremental stores</b>
+      <p>{{ row.prior_traited_store_count }} prior · {{ row.traited_store_count }} current{% if row.illustrative_initial_fill != None %} · {{ row.illustrative_initial_fill|floatformat:0 }} illustrative fill units{% endif %}.</p>
+      <small>Potential recommendation: separate initial fill from steady replenishment; the per-store assumption requires approval.</small>
+      {% else %}<b class="analysis-missing">Confirmation required</b><p>Comparable current and prior traited-store counts are missing.</p>{% endif %}
+    </article>
+    <article>
+      <span class="analysis-letter">F</span><h3>eCommerce stock</h3>
+      {% if row.ecomm_weeks_of_supply != None %}
+      <b>{{ row.ecomm_weeks_of_supply|floatformat:1 }} weeks at the reported sales rate</b>
+      <p>{{ row.ecomm_on_hand_inventory|floatformat:0 }} on hand across {{ row.ecomm_fc_count }} FCs; {{ row.ecomm_units|floatformat:0 }} reported units sold.</p>
+      <small>Potential recommendation: review SKU/FC availability before adding or reducing supply.</small>
+      {% else %}<b class="analysis-missing">Confirmation required</b><p>FC-level inventory or comparable eCommerce sales is missing.</p>{% endif %}
+    </article>
+  </div>
+  <p class="formula-note">These are evidence-based potential recommendations. They are not production, purchase, or shipment authorization.</p>
+</section>
+
 {% if not demo_read_only %}
 <section class="form-panel narrow">
   <div class="panel-head"><div><span class="eyebrow">REVIEW RECORD</span><h2>Status and notes</h2></div></div>
