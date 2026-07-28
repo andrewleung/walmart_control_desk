@@ -76,7 +76,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 if IS_RENDER:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = True
+    # Render terminates TLS and redirects public HTTP before Django; leaving this
+    # disabled allows the platform's internal health check to receive HTTP 200.
+    SILENCED_SYSTEM_CHECKS = ["security.W008"]
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 3600
