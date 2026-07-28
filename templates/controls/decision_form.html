@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ row.sku.vendor_stock_id }} calculation · Walmart Control Desk{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back" href="{% url 'controls:cycle_detail' row.cycle_id %}">← {{ row.cycle.name }}</a>
+    <div class="eyebrow">{{ row.sku.vendor_stock_id }}</div>
+    <h1>{{ row.sku.item_name }}</h1>
+    <p>Trace the quantified schedule from available supply through commitments and buffer, then record Jessica's status and notes.</p>
+  </div>
+</div>
+
+{% if row.cycle.is_synthetic %}
+<div class="synthetic-banner">SYNTHETIC DEMONSTRATION DATA — NOT FOR OPERATIONAL USE</div>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head"><div><span class="eyebrow">SUPPLY COMPOSITION</span><h2>What is available</h2></div></div>
+  <div class="calculation-grid">
+    <article><span>eCommerce available</span><strong>{% if row.ecomm_available_inventory != None %}{{ row.ecomm_available_inventory|floatformat:0 }}{% else %}Missing{% endif %}</strong><small>Package 3</small></article>
+    <article><span>Factory available</span><strong>{% if row.factory_available_inventory != None %}{{ row.factory_available_inventory|floatformat:0 }}{% else %}Missing{% endif %}</strong><small>Package 7</small></article>
+    <article><span>RJW available</span><strong>{% if row.rjw_available_inventory != None %}{{ row.rjw_available_inventory|floatformat:0 }}{% else %}Missing{% endif %}</strong><small>Package 8</small></article>
+    <article class="total"><span>Total usable supply</span><strong>{% if row.usable_supply != None %}{{ row.usable_supply|floatformat:0 }}{% else %}Blocked{% endif %}</strong><small>Available components combined</small></article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><div><span class="eyebrow">RECONCILIATION BRIDGE</span><h2>Projected-gap calculation</h2></div><span class="badge {{ row.decision_status|lower }}">{{ row.get_decision_status_display }}</span></div>
+  {% if row.projected_gap != None %}
+  <div class="reconciliation-bridge">
+    <div><span>Usable supply</span><strong>{{ row.usable_supply|floatformat:0 }}</strong></div>
+    <i>+</i>
+    <div><span>On-time inbound</span><strong>{{ row.confirmed_on_time_inbound|floatformat:0 }}</strong></div>
+    <i>−</i>
+    <div><span>Commitments</span><strong>{{ row.current_commitments|floatformat:0 }}</strong><small>{% if row.next_mabd %}MABD {{ row.next_mabd|date:"d M Y" }}{% endif %}</small></div>
+    <i>−</i>
+    <div><span>Approved buffer</span><strong>{{ row.approved_buffer|floatformat:0 }}</strong></div>
+    <i>=</i>
+    <div class="result"><span>Projected gap</span><strong>{{ row.projected_gap|floatformat:0 }}</strong></div>
+  </div>
+  <p class="formula-note">Projected gap = usable supply + confirmed on-time inbound − current commitments − approved buffer.</p>
+  {% else %}
+  <div class="blocked-calculation"><b>Calculation blocked</b><p>Usable supply, confirmed on-time inbound or current commitments are incomplete.</p></div>
+  {% endif %}
+
+  {% if row.late_inbound_quantity %}
+  <div class="late-inbound">
+    <b>{{ row.late_inbound_quantity|floatformat:0 }} late inbound units are excluded</b>
+    <span>They are not available for the current MABD{% if row.next_inbound_available %}; expected availability is {{ row.next_inbound_available|date:"d M Y" }}{% endif %}.</span>
+  </div>
+  {% endif %}
+</section>
+
+{% if not demo_read_only %}
+<section class="form-panel narrow">
+  <div class="panel-head"><div><span class="eyebrow">REVIEW RECORD</span><h2>Status and notes</h2></div></div>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label class="field"><span>{{ field.label }}</span>{{ field }}{% for error in field.errors %}<em>{{ error }}</em>{% endfor %}</label>
+    {% endfor %}
+    <div class="form-actions"><a class="button ghost" href="{% url 'controls:cycle_detail' row.cycle_id %}">Cancel</a><button class="button primary">Save note</button></div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ cycle.name }} · Walmart Control Desk{% endblock %}
+{% block content %}
+<section class="cycle-hero">
+  <div>
+    <a class="back" href="{% url 'controls:dashboard' %}">← Control cycles</a>
+    <div class="eyebrow">WALMART WEEK {{ cycle.walmart_week }}</div>
+    <h1>{{ cycle.name }}</h1>
+    <p>Cutoff {{ cycle.cutoff_at|date:"d M Y, H:i" }} · Prepared by Jessica</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button ghost" href="{% url 'controls:print_report' cycle.pk %}" target="_blank">Print / PDF</a>
+    <a class="button ghost" href="{% url 'controls:export_excel' cycle.pk %}">Export Excel</a>
+    {% if not demo_read_only %}<form method="post" action="{% url 'controls:run_reconciliation' cycle.pk %}">{% csrf_token %}<button class="button primary" type="submit">Run controls</button></form>{% endif %}
+  </div>
+</section>
+
+{% if cycle.is_synthetic %}
+<div class="synthetic-banner">SYNTHETIC DEMONSTRATION DATA — NOT FOR OPERATIONAL USE</div>
+{% endif %}
+
+<section class="status-banner {{ cycle.status|lower }}">
+  <div><span class="status-dot"></span><b>{{ cycle.get_status_display }}</b></div>
+  {% if cycle.status == "BLOCKED" %}
+  <p>Critical current supply or commitment evidence is incomplete. The application will not calculate a final surplus, shortage, or supply authorization.</p>
+  {% elif cycle.status == "READY" %}
+  <p>Required critical inputs are present. Review exceptions and reconciliation results before recording a decision.</p>
+  {% else %}
+  <p>Load the available packages, then run the reconciliation controls.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head"><div><span class="eyebrow">INPUT REGISTER</span><h2>Nine control packages</h2></div>{% if not demo_read_only %}<a class="text-link" href="{% url 'controls:package_upload' cycle.pk %}">Upload package →</a>{% endif %}</div>
+  <div class="package-grid">
+    {% for package in packages %}
+    <article class="package-card {% if package.upload %}{{ package.upload.status|lower }}{% else %}missing{% endif %}">
+      <div class="package-top"><span>P{{ package.number|stringformat:"02d" }}</span>
+        {% if package.upload %}<b>{{ package.upload.get_status_display }}</b>{% else %}<b>Not loaded</b>{% endif %}
+      </div>
+      <h3>{{ package.label }}</h3>
+      {% if package.upload %}
+        <p>{{ package.upload.original_name }}</p>
+        <small>{{ package.upload.row_count|default:"0" }} rows · {{ package.upload.uploaded_at|date:"d M, H:i" }}</small>
+        <div class="validation">{{ package.upload.validation_message }}</div>
+      {% else %}
+        <p>No source has been retained for this cycle.</p>
+      {% endif %}
+      {% if not demo_read_only %}<a href="{% url 'controls:package_upload' cycle.pk %}?package={{ package.number }}">{% if package.upload %}Replace source{% else %}Add source{% endif %} →</a>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head"><div><span class="eyebrow">QUANTIFIED SCHEDULE</span><h2>Inventory and commitment reconciliation</h2></div><span class="legend"><i class="known"></i>known <i class="missing"></i>missing</span></div>
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>SKU</th><th>Item</th><th>Store POS</th><th>Store OH</th><th>In-stock</th><th>4W demand</th><th>Order forecast</th><th>Usable supply</th><th>Commitments</th><th>Projected gap</th><th>Decision</th></tr></thead>
+      <tbody>
+      {% for row in rows %}
+      <tr>
+        <td><a href="{% url 'controls:update_decision' row.pk %}"><b>{{ row.sku.vendor_stock_id }}</b></a></td>
+        <td>{{ row.sku.item_name }}</td>
+        <td>{{ row.store_pos_units|floatformat:0|default:"—" }}</td>
+        <td>{{ row.store_on_hand|floatformat:0|default:"—" }}</td>
+        <td>{% if row.replen_instock_percent != None %}{{ row.replen_instock_percent|floatformat:1 }}%{% else %}<span class="cell-missing">missing</span>{% endif %}</td>
+        <td>{{ row.forecast_demand_4w|floatformat:1|default:"—" }}</td>
+        <td>{{ row.order_forecast_total|floatformat:0|default:"—" }}</td>
+        <td>{% if row.usable_supply != None %}{{ row.usable_supply|floatformat:0 }}{% else %}<span class="cell-missing">missing</span>{% endif %}</td>
+        <td>{% if row.current_commitments != None %}{{ row.current_commitments|floatformat:0 }}{% else %}<span class="cell-missing">missing</span>{% endif %}</td>
+        <td>{% if row.projected_gap != None %}{{ row.projected_gap|floatformat:0 }}{% else %}<span class="cell-blocked">blocked</span>{% endif %}</td>
+        <td><span class="badge {{ row.decision_status|lower }}">{{ row.get_decision_status_display }}</span><a class="row-detail-link" href="{% url 'controls:update_decision' row.pk %}">View calculation</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty compact"><h3>No normalized SKU data yet</h3><p>Upload package 1 to establish the item set and actual store position.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-head"><div><span class="eyebrow">EXCEPTION QUEUE</span><h2>What prevents a safe conclusion</h2></div><strong>{{ exceptions|length }} open records</strong></div>
+  {% if exceptions %}
+  <div class="exception-list">
+    {% for item in exceptions %}
+    <article>
+      <span class="severity {{ item.severity|lower }}">{{ item.severity }}</span>
+      <div><h3>{% if item.sku %}{{ item.sku.vendor_stock_id }} · {% endif %}{{ item.title }}</h3><p>{{ item.effect }}</p><small>Required: {{ item.required_action }}</small></div>
+      <span class="badge">{{ item.get_status_display }}</span>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty compact"><h3>No exceptions generated</h3><p>Run the controls after loading source packages.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

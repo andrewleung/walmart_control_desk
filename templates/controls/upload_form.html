@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Upload package · Walmart Control Desk{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><a class="back" href="{% url 'controls:cycle_detail' cycle.pk %}">← {{ cycle.name }}</a><h1>Upload an input package</h1><p>The original file is retained unchanged. Supported Walmart files are validated and normalized automatically.</p></div>
+</div>
+<section class="form-panel">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="drop-intro"><b>Choose the source file</b><span>.xlsx or .csv recommended · source metadata retained</span></div>
+    {% for field in form %}
+    <label class="field">
+      <span>{{ field.label }}</span>
+      {{ field }}
+      {% for error in field.errors %}<em>{{ error }}</em>{% endfor %}
+    </label>
+    {% endfor %}
+    <div class="form-actions">
+      <a class="button ghost" href="{% url 'controls:cycle_detail' cycle.pk %}">Cancel</a>
+      <button class="button primary" type="submit">Upload and validate</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

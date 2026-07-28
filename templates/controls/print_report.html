@@ -1,0 +1,18 @@
+{% load static %}
+<!doctype html>
+<html><head><meta charset="utf-8"><title>{{ cycle.name }} report</title><link rel="stylesheet" href="{% static 'print.css' %}"></head>
+<body>
+<header><div>WALMART CONTROL DESK</div><button onclick="window.print()">Print / Save PDF</button></header>
+<main>
+  {% if cycle.is_synthetic %}<div class="synthetic-notice">SYNTHETIC DEMONSTRATION DATA — NOT FOR OPERATIONAL USE</div>{% endif %}
+  <p class="kicker">WALMART WEEK {{ cycle.walmart_week }}</p>
+  <h1>{{ cycle.name }}</h1>
+  <p>Cutoff {{ cycle.cutoff_at|date:"d M Y, H:i" }} · Prepared by Jessica</p>
+  <div class="conclusion"><b>Status: {{ cycle.get_status_display }}</b><br>Critical missing data prevents a final supply conclusion whenever usable supply, confirmed inbound, or current commitments are incomplete.</div>
+  <h2>Inventory and commitment schedule</h2>
+  <table><thead><tr><th>SKU</th><th>Store POS</th><th>Store OH</th><th>4W demand</th><th>Order forecast</th><th>Usable supply</th><th>Commitments</th><th>Projected gap</th><th>Status</th></tr></thead>
+  <tbody>{% for row in rows %}<tr><td><b>{{ row.sku.vendor_stock_id }}</b><small>{{ row.sku.item_name }}</small></td><td>{{ row.store_pos_units|floatformat:0|default:"—" }}</td><td>{{ row.store_on_hand|floatformat:0|default:"—" }}</td><td>{{ row.forecast_demand_4w|floatformat:1|default:"—" }}</td><td>{{ row.order_forecast_total|floatformat:0|default:"—" }}</td><td>{{ row.usable_supply|floatformat:0|default:"DATA MISSING" }}</td><td>{{ row.current_commitments|floatformat:0|default:"DATA MISSING" }}</td><td>{{ row.projected_gap|floatformat:0|default:"BLOCKED" }}</td><td>{{ row.get_decision_status_display }}</td></tr>{% endfor %}</tbody></table>
+  <h2>Exceptions</h2>
+  {% for item in exceptions %}<article><b>{{ item.severity }} · {% if item.sku %}{{ item.sku.vendor_stock_id }} · {% endif %}{{ item.title }}</b><p>{{ item.effect }}</p><small>Required action: {{ item.required_action }}</small></article>{% empty %}<p>No exceptions.</p>{% endfor %}
+</main>
+</body></html>

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+data/control.sqlite3
+data/uploads/
+staticfiles/
+controls/management/commands/seed_trial.py
+demo_data/PARTIAL_DATA_DEMO_TALKSCRIPT.md
+run_demo.sh
+run_partial_demo.sh
+*.log
+.DS_Store

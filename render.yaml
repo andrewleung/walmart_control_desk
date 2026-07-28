@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: walmart-control-synthetic-demo
+    runtime: python
+    plan: free
+    buildCommand: ./build_render.sh
+    startCommand: ./start_render.sh
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: DEMO_READ_ONLY
+        value: "true"
+      - key: SYNTHETIC_ONLY
+        value: "true"

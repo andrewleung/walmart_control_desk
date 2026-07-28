@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Control cycles · Walmart Control Desk{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <div class="eyebrow">CONTROL CYCLES</div>
+    <h1>Turn source files into a dated supply decision.</h1>
+    <p>Create a reporting cycle, load the nine input packages, and let the controls show what is known, what is missing, and whether a supply conclusion is safe.</p>
+  </div>
+  {% if not demo_read_only %}<a class="button primary" href="{% url 'controls:cycle_create' %}">New control cycle</a>{% endif %}
+</section>
+
+<section class="metric-grid">
+  <article><span>Cycles</span><strong>{{ cycles|length }}</strong><small>retained locally</small></article>
+  <article><span>Mode</span><strong>{% if demo_read_only %}Read-only{% else %}Jessica{% endif %}</strong><small>{% if demo_read_only %}synthetic public demonstration{% else %}single-user MVP{% endif %}</small></article>
+  <article><span>Decision gate</span><strong>Evidence first</strong><small>critical gaps block conclusions</small></article>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div><span class="eyebrow">RECENT WORK</span><h2>Control cycle register</h2></div>
+  </div>
+  {% if cycles %}
+  <div class="cycle-list">
+    {% for cycle in cycles %}
+    <a class="cycle-card" href="{% url 'controls:cycle_detail' cycle.pk %}">
+      <div class="cycle-week"><small>Walmart week</small><strong>{{ cycle.walmart_week }}</strong></div>
+      <div class="cycle-main">
+        <h3>{{ cycle.name }} {% if cycle.is_synthetic %}<span class="synthetic-tag">Synthetic</span>{% endif %}</h3>
+        <p>Cutoff {{ cycle.cutoff_at|date:"d M Y, H:i" }} · Prepared by {{ cycle.prepared_by }}</p>
+      </div>
+      <div class="cycle-stats">
+        <span>{{ cycle.uploads.count }}/9 packages</span>
+        <span>{{ cycle.exceptions.count }} exceptions</span>
+      </div>
+      <span class="badge {{ cycle.status|lower }}">{{ cycle.get_status_display }}</span>
+      <b class="arrow">→</b>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="empty-mark">01</div>
+    <h3>No control cycles yet</h3>
+    <p>Start with the current Walmart week and reporting cutoff.</p>
+    {% if not demo_read_only %}<a class="button primary" href="{% url 'controls:cycle_create' %}">Create the first cycle</a>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

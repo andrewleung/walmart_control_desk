@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}New cycle · Walmart Control Desk{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><a class="back" href="{% url 'controls:dashboard' %}">← Control cycles</a><h1>Create a control cycle</h1><p>Use one Walmart week and one cutoff for every package in the cycle.</p></div>
+</div>
+<section class="form-panel narrow">
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label class="field">
+      <span>{{ field.label }}</span>
+      {{ field }}
+      {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+      {% for error in field.errors %}<em>{{ error }}</em>{% endfor %}
+    </label>
+    {% endfor %}
+    <div class="form-actions">
+      <a class="button ghost" href="{% url 'controls:dashboard' %}">Cancel</a>
+      <button class="button primary" type="submit">Create cycle</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
