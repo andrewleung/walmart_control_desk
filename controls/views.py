@@ -13,6 +13,7 @@ from openpyxl.utils import get_column_letter
 from .forms import CycleForm, DecisionForm, UploadForm
 from .models import ControlCycle, PackageUpload, ReconciliationRow
 from .services import process_upload, run_controls
+from .template_schemas import PACKAGE_TEMPLATE_SCHEMAS
 
 
 def dashboard(request):
@@ -72,6 +73,54 @@ def package_upload(request, pk):
             messages.success(request, f"Package {upload.package_number} uploaded: {upload.validation_message}")
         return redirect("controls:cycle_detail", pk=cycle.pk)
     return render(request, "controls/upload_form.html", {"cycle": cycle, "form": form})
+
+
+def package_template(request, package_number):
+    labels = dict(PackageUpload.PACKAGE_CHOICES)
+    schema = PACKAGE_TEMPLATE_SCHEMAS.get(package_number)
+    if not schema or package_number not in labels:
+        return HttpResponse(status=404)
+
+    book = Workbook()
+    data = book.active
+    data.title = "Data Upload"
+    headers = [column for column, _required, _guidance in schema]
+    data.append(headers)
+    for cell in data[1]:
+        cell.fill = PatternFill("solid", fgColor="17365D")
+        cell.font = Font(color="FFFFFF", bold=True)
+        cell.alignment = Alignment(wrap_text=True)
+    data.freeze_panes = "A2"
+    data.auto_filter.ref = f"A1:{get_column_letter(len(headers))}1"
+    for index, header in enumerate(headers, 1):
+        data.column_dimensions[get_column_letter(index)].width = min(max(len(header) + 3, 18), 42)
+
+    instructions = book.create_sheet("Instructions")
+    instructions.append([f"P{package_number:02d}", labels[package_number]])
+    instructions.append(["Purpose", "Enter one source record per row on the Data Upload sheet. Do not rename the columns."])
+    instructions.append(["Dates", "Use YYYY-MM-DD. Walmart weeks use YYYYYY, for example 202630."])
+    instructions.append(["Required fields", "Every required column must remain present; values should be completed for each applicable row."])
+    instructions.append([])
+    instructions.append(["Column", "Required?", "Meaning / format"])
+    for column, required, guidance in schema:
+        instructions.append([column, "Yes" if required else "No", guidance])
+    for cell in instructions[6]:
+        cell.fill = PatternFill("solid", fgColor="17365D")
+        cell.font = Font(color="FFFFFF", bold=True)
+    instructions.column_dimensions["A"].width = 42
+    instructions.column_dimensions["B"].width = 14
+    instructions.column_dimensions["C"].width = 78
+    instructions.freeze_panes = "A7"
+
+    output = BytesIO()
+    book.save(output)
+    filename = f"P{package_number:02d}_blank_upload_template.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @require_POST

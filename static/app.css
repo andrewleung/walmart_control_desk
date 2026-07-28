@@ -71,7 +71,8 @@ p { color: var(--muted); }
 .package-card p { margin: 0 0 6px; font-size: .82rem; overflow-wrap: anywhere; }
 .package-card small { color: var(--muted); }
 .package-card .validation { margin: 12px 0; color: #4f5c54; font-size: .76rem; }
-.package-card > a { margin-top: auto; color: var(--green); font-size: .8rem; font-weight: 750; text-decoration: none; }
+.package-actions { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.package-actions a { color: var(--green); font-size: .76rem; font-weight: 750; text-decoration: none; }
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 13px; }
 table { width: 100%; border-collapse: collapse; font-size: .78rem; }
 th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }

@@ -46,7 +46,10 @@
       {% else %}
         <p>No source has been retained for this cycle.</p>
       {% endif %}
-      {% if not demo_read_only %}<a href="{% url 'controls:package_upload' cycle.pk %}?package={{ package.number }}">{% if package.upload %}Replace source{% else %}Add source{% endif %} →</a>{% endif %}
+      <div class="package-actions">
+        <a href="{% url 'controls:package_template' package.number %}">Download blank template</a>
+        {% if not demo_read_only %}<a href="{% url 'controls:package_upload' cycle.pk %}?package={{ package.number }}">{% if package.upload %}Replace source{% else %}Add source{% endif %} →</a>{% endif %}
+      </div>
     </article>
     {% endfor %}
   </div>

@@ -1,9 +1,11 @@
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from openpyxl import load_workbook
 
 from .models import ControlCycle, ReconciliationRow, SKU
 from .services import run_controls
@@ -54,6 +56,33 @@ class ControlGateTests(TestCase):
         response = self.client.get(reverse("controls:export_excel", args=[self.cycle.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.content.startswith(b"PK"))
+
+    def test_each_package_has_downloadable_blank_template(self):
+        for package_number in range(1, 10):
+            response = self.client.get(
+                reverse("controls:package_template", args=[package_number])
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.content.startswith(b"PK"))
+            self.assertIn(
+                f'filename="P{package_number:02d}_blank_upload_template.xlsx"',
+                response["Content-Disposition"],
+            )
+
+        factory = self.client.get(reverse("controls:package_template", args=[7]))
+        book = load_workbook(BytesIO(factory.content), read_only=True)
+        self.assertEqual(
+            list(next(book["Data Upload"].iter_rows(values_only=True))),
+            [
+                "vendor_stock_id",
+                "finished_goods_available_quantity",
+                "work_in_process_quantity",
+                "planned_completion_date",
+                "release_date",
+            ],
+        )
+        self.assertIn("Instructions", book.sheetnames)
+        book.close()
 
     @override_settings(DEMO_READ_ONLY=True, SYNTHETIC_ONLY=True)
     def test_public_demo_hides_real_cycle_and_blocks_changes(self):
