@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Route control · {{ cycle.name }}{% endblock %}
+{% block extra_head %}<link href="https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.css" rel="stylesheet">{% endblock %}
+{% block content %}
+<section class="cycle-hero route-hero">
+  <div>
+    <a class="back" href="{% url 'controls:cycle_detail' cycle.pk %}">← {{ cycle.name }}</a>
+    <div class="eyebrow">WALMART WEEK {{ cycle.walmart_week }} · ROUTE CONTROL</div>
+    <h1>Where supply is—and what remains unproven</h1>
+    <p>Aggregate physical positions and commercial commitments are shown separately. Click a stage to filter the supporting item records.</p>
+  </div>
+</section>
+
+{% if cycle.is_synthetic %}<div class="synthetic-banner">SYNTHETIC DEMONSTRATION DATA — NOT FOR OPERATIONAL USE</div>{% endif %}
+
+<section class="panel route-panel">
+  <div class="panel-head">
+    <div><span class="eyebrow">PHYSICAL ROUTE</span><h2>Aggregate evidence by stage</h2></div>
+    <div class="route-view-switch" role="group" aria-label="Route view">
+      <button class="route-view-button active" type="button" data-route-view="flow" aria-pressed="true">Flow</button>
+      <button class="route-view-button" type="button" data-route-view="map" aria-pressed="false">Geography</button>
+    </div>
+  </div>
+  <div id="route-flow-view">
+    <div class="route-view-meta"><span class="route-legend"><i class="solid"></i>recorded <i class="dashed"></i>not fully linked</span></div>
+    <div class="route-scroll">
+      <div class="route-flow" aria-label="Physical supply route">
+      {% for stage in stages %}
+      <button class="route-stage {% if stage.units == None %}route-unknown{% endif %}" type="button" data-stage="{{ stage.key }}" aria-pressed="false">
+        <span class="route-step">{{ forloop.counter|stringformat:"02d" }}</span>
+        <b>{{ stage.label }}</b>
+        <strong>{% if stage.units != None %}{{ stage.units|floatformat:0 }}{% else %}—{% endif %}</strong>
+        <small>{% if stage.units != None %}units · {% endif %}{{ stage.known_count }} items supported</small>
+        {% if stage.missing_count %}<em>{{ stage.missing_count }} missing</em>{% endif %}
+        <span class="source-tag">{{ stage.source }}</span>
+      </button>
+      {% if not forloop.last %}<div class="route-edge {% if stage.units == None %}edge-warning{% endif %}" aria-hidden="true"><span>›</span></div>{% endif %}
+      {% endfor %}
+      </div>
+    </div>
+    <p class="route-note">“Waterborne / inbound” uses confirmed inbound quantities because the MVP does not yet hold a separate transport-mode field. “Port” is milestone evidence and does not claim a separately counted inventory balance.</p>
+  </div>
+  <div id="route-map-view" hidden>
+    <div class="map-disclosure"><b>{% if cycle.is_synthetic %}Synthetic geography{% else %}Controlled locations required{% endif %}</b><span>{% if cycle.is_synthetic %}Every coordinate is made up for demonstration and must not be used operationally.{% else %}No operational coordinates are plotted until an approved location master is loaded.{% endif %}</span></div>
+    {% if geo_locations %}
+      <div id="route-map" aria-label="Synthetic geographic supply route"></div>
+      <div id="map-load-status" class="map-load-status" role="status">Open the Geography tab to load the interactive map.</div>
+    {% else %}
+      <div class="map-placeholder"><span>⌖</span><h3>No controlled coordinates loaded</h3><p>Add approved facility codes, names, addresses, latitude and longitude before enabling operational geography.</p></div>
+    {% endif %}
+    <div class="unmapped-locations"><b>Not mapped</b>{% for location in unmapped_locations %}<span>{{ location }}</span>{% endfor %}</div>
+  </div>
+</section>
+
+<section class="panel commitment-panel">
+  <div class="panel-head"><div><span class="eyebrow">COMMITMENT LAYER</span><h2>Plans and obligations—not physical inventory</h2></div></div>
+  <div class="commitment-strip">
+    {% for item in commitments %}
+    <article><span>{{ item.label }}</span><strong>{% if item.units != None %}{{ item.units|floatformat:0 }}{% else %}—{% endif %}</strong><small>{{ item.source }}</small></article>
+    {% if not forloop.last %}<i>→</i>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<section class="mapping-metrics" aria-label="Item mapping summary">
+  <article class="mapping-confirmed"><span>Confirmed mappings</span><strong>{{ mapping_counts.CONFIRMED }}</strong><small>of {{ mapping_total }} cycle items</small></article>
+  <article class="mapping-provisional"><span>Provisional mappings</span><strong>{{ mapping_counts.PROVISIONAL }}</strong><small>identifier review required</small></article>
+  <article class="mapping-unresolved"><span>Unresolved entries</span><strong>{{ mapping_counts.UNRESOLVED }}</strong><small>blocks automated matching</small></article>
+</section>
+
+{% if mapping_entries %}
+<section class="panel mapping-review-panel">
+  <div class="panel-head"><div><span class="eyebrow">MAPPING REVIEW QUEUE</span><h2>Identifiers outside the decision schedule</h2><p>These records demonstrate identifier control only. Their quantities are not included in supply, commitment, or gap calculations.</p></div></div>
+  <div class="mapping-review-list">
+    {% for entry in mapping_entries %}
+    <article class="{{ entry.status|lower }}">
+      <div><span class="mapping-pill {{ entry.status|lower }}">{{ entry.get_status_display }}</span><h3>{{ entry.internal_sku }}</h3></div>
+      <dl>
+        <div><dt>Proposed alias</dt><dd>{{ entry.proposed_alias|default:"—" }}</dd></div>
+        <div><dt>Walmart item</dt><dd>{{ entry.walmart_item_number|default:"Not established" }}</dd></div>
+        <div><dt>GTIN</dt><dd>{{ entry.gtin|default:"Not established" }}</dd></div>
+        <div><dt>Confidence</dt><dd>{{ entry.get_confidence_display }}</dd></div>
+      </dl>
+      <p>{{ entry.evidence }}</p>
+      <small><b>Required:</b> {{ entry.required_action }}</small>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-head">
+    <div><span class="eyebrow">DRILL-DOWN GRID</span><h2>Items supporting the route</h2></div>
+    <button id="clear-route-filter" class="filter-clear" type="button" hidden>Show all items</button>
+  </div>
+  {% if route_rows %}
+  <div class="table-wrap">
+    <table class="data-table route-table" id="route-records">
+      <thead><tr><th>SKU</th><th>Item configuration</th><th>Mapping</th><th>Confidence</th><th>Factory / WIP</th><th>Inbound</th><th>RJW</th><th>Walmart inventory</th><th>Sales</th><th>Warning</th></tr></thead>
+      <tbody>
+      {% for item in route_rows %}
+      <tr data-known-stages="{{ item.known_stages }}">
+        <td><a href="{% url 'controls:update_decision' item.row.pk %}"><b>{{ item.row.sku.vendor_stock_id }}</b></a></td>
+        <td>{% if item.row.sku.walmart_item_number %}{{ item.row.sku.walmart_item_number }}{% else %}<span class="cell-missing">not established</span>{% endif %}</td>
+        <td><span class="mapping-pill {{ item.mapping_status|lower }}">{{ item.mapping_status }}</span><small class="evidence-note">{{ item.mapping_evidence }}</small></td>
+        <td>{{ item.confidence }}</td>
+        <td>{{ item.row.work_in_process_quantity|floatformat:0|default:"—" }} / {{ item.row.factory_available_inventory|floatformat:0|default:"—" }}</td>
+        <td>{{ item.row.confirmed_on_time_inbound|floatformat:0|default:"—" }}</td>
+        <td>{{ item.row.rjw_physical_inventory|floatformat:0|default:"—" }}</td>
+        <td>{% if item.row.ecomm_on_hand_inventory != None %}FC {{ item.row.ecomm_on_hand_inventory|floatformat:0 }}{% elif item.row.store_on_hand != None %}Stores {{ item.row.store_on_hand|floatformat:0 }}{% else %}—{% endif %}</td>
+        <td>{% if item.row.store_pos_units != None %}{{ item.row.store_pos_units|floatformat:0 }}{% elif item.row.ecomm_units != None %}{{ item.row.ecomm_units|floatformat:0 }}{% else %}—{% endif %}</td>
+        <td class="warning-cell">{% for warning in item.warnings %}<span>{{ warning }}</span>{% empty %}<span class="no-warning">No route warning generated</span>{% endfor %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div id="route-empty" class="empty compact" hidden><h3>No items support this stage</h3><p>Load or reconcile the applicable package before treating the route segment as proven.</p></div>
+  {% else %}<div class="empty compact"><h3>No normalized item data</h3><p>Upload the relevant packages and run controls first.</p></div>{% endif %}
+</section>
+
+<script>
+(function () {
+  const buttons = [...document.querySelectorAll('.route-stage')];
+  const rows = [...document.querySelectorAll('#route-records tbody tr')];
+  const clear = document.getElementById('clear-route-filter');
+  const empty = document.getElementById('route-empty');
+  if (!rows.length) return;
+  function filter(stage) {
+    let visible = 0;
+    rows.forEach(row => {
+      const show = !stage || (` ${row.dataset.knownStages} `).includes(` ${stage} `);
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    buttons.forEach(button => {
+      const selected = button.dataset.stage === stage;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+    clear.hidden = !stage;
+    empty.hidden = visible !== 0;
+  }
+  window.filterRouteRecords = filter;
+  buttons.forEach(button => button.addEventListener('click', () => filter(button.dataset.stage)));
+  clear.addEventListener('click', () => filter(''));
+})();
+</script>
+{{ geo_locations|json_script:"geo-locations-data" }}
+{{ geo_segments|json_script:"geo-segments-data" }}
+{% endblock %}
+{% block extra_script %}
+<script type="module">
+const viewButtons = [...document.querySelectorAll('[data-route-view]')];
+const flowView = document.getElementById('route-flow-view');
+const mapView = document.getElementById('route-map-view');
+const mapContainer = document.getElementById('route-map');
+const mapStatus = document.getElementById('map-load-status');
+let routeMap;
+
+async function initializeMap() {
+  if (!mapContainer || routeMap) return;
+  try {
+    const maplibregl = await import('https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.mjs');
+    const locations = JSON.parse(document.getElementById('geo-locations-data').textContent);
+    const segments = JSON.parse(document.getElementById('geo-segments-data').textContent);
+    routeMap = new maplibregl.Map({
+      container: mapContainer,
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [175, 28],
+      zoom: 1.15,
+      attributionControl: true
+    });
+    routeMap.addControl(new maplibregl.NavigationControl({showCompass: false}), 'top-right');
+    routeMap.on('load', () => {
+      const confirmed = segments.filter(segment => segment.status === 'confirmed');
+      const provisional = segments.filter(segment => segment.status !== 'confirmed');
+      routeMap.addSource('confirmed-routes', {type: 'geojson', data: {type: 'FeatureCollection', features: confirmed.map(segment => ({type: 'Feature', properties: {name: segment.name}, geometry: {type: 'LineString', coordinates: segment.coordinates}}))}});
+      routeMap.addLayer({id: 'confirmed-routes', type: 'line', source: 'confirmed-routes', paint: {'line-color': '#174f3b', 'line-width': 3, 'line-opacity': .82}});
+      routeMap.addSource('provisional-routes', {type: 'geojson', data: {type: 'FeatureCollection', features: provisional.map(segment => ({type: 'Feature', properties: {name: segment.name}, geometry: {type: 'LineString', coordinates: segment.coordinates}}))}});
+      routeMap.addLayer({id: 'provisional-routes', type: 'line', source: 'provisional-routes', paint: {'line-color': '#c4932e', 'line-width': 3, 'line-dasharray': [2, 2]}});
+      locations.forEach(location => {
+        const markerElement = document.createElement('button');
+        markerElement.className = `map-marker ${location.status}`;
+        markerElement.type = 'button';
+        markerElement.title = `${location.name} · ${location.kind}`;
+        markerElement.setAttribute('aria-label', markerElement.title);
+        markerElement.addEventListener('click', () => {
+          if (window.filterRouteRecords) window.filterRouteRecords(location.stage);
+          document.getElementById('route-records')?.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+        const popup = new maplibregl.Popup({offset: 18}).setHTML(`<b>${location.name}</b><span>${location.kind}</span><small>${location.note}</small>`);
+        new maplibregl.Marker({element: markerElement}).setLngLat(location.coordinates).setPopup(popup).addTo(routeMap);
+      });
+      if (mapStatus) mapStatus.textContent = 'Solid lines are recorded demonstration links; dashed amber lines are provisional.';
+    });
+    routeMap.on('error', event => {
+      if (mapStatus && !routeMap.loaded()) mapStatus.textContent = 'The map tiles could not be loaded. The flow view and reconciliation records remain available.';
+    });
+  } catch (error) {
+    if (mapStatus) mapStatus.textContent = 'The map library could not be loaded. Check the internet connection; no reconciliation data is affected.';
+  }
+}
+
+viewButtons.forEach(button => button.addEventListener('click', async () => {
+  const showMap = button.dataset.routeView === 'map';
+  flowView.hidden = showMap;
+  mapView.hidden = !showMap;
+  viewButtons.forEach(item => {
+    const selected = item === button;
+    item.classList.toggle('active', selected);
+    item.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  });
+  if (showMap) {
+    await initializeMap();
+    window.setTimeout(() => routeMap?.resize(), 0);
+  }
+}));
+</script>
+{% endblock %}

@@ -6,6 +6,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("cycles/new/", views.cycle_create, name="cycle_create"),
     path("cycles/<int:pk>/", views.cycle_detail, name="cycle_detail"),
+    path("cycles/<int:pk>/routes/", views.route_control, name="route_control"),
     path("cycles/<int:pk>/upload/", views.package_upload, name="package_upload"),
     path("templates/packages/<int:package_number>/blank.xlsx", views.package_template, name="package_template"),
     path("templates/packages/mapping/", views.package_mapping, name="package_mapping"),

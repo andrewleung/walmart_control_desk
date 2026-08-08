@@ -1,5 +1,6 @@
 from io import BytesIO
 from pathlib import Path
+from decimal import Decimal
 
 from django.contrib import messages
 from django.conf import settings
@@ -14,6 +15,21 @@ from .forms import CycleForm, DecisionForm, UploadForm
 from .models import ControlCycle, PackageUpload, ReconciliationRow
 from .services import process_upload, run_controls
 from .template_schemas import PACKAGE_ANALYSIS_USE, PACKAGE_TEMPLATE_SCHEMAS
+
+
+def _sum_known(rows, field):
+    values = [getattr(row, field) for row in rows if getattr(row, field) is not None]
+    return sum(values, Decimal("0")) if values else None
+
+
+def _mapping_summary(sku):
+    if sku.walmart_item_number and (sku.gtin or sku.consumer_id or sku.all_links_item_number):
+        return "CONFIRMED", "High", "Walmart item plus an independent catalog identifier"
+    if sku.walmart_item_number:
+        return "CONFIRMED", "Medium", "Walmart item number present; secondary identifier missing"
+    if sku.gtin or sku.consumer_id or sku.all_links_item_number:
+        return "PROVISIONAL", "Medium", "Candidate identifier present; Walmart item number missing"
+    return "UNRESOLVED", "Low", "No Walmart item number or independent catalog identifier"
 
 
 def dashboard(request):
@@ -52,6 +68,134 @@ def cycle_detail(request, pk):
         "packages": packages,
         "rows": cycle.rows.select_related("sku"),
         "exceptions": cycle.exceptions.select_related("sku"),
+    })
+
+
+def route_control(request, pk):
+    queryset = ControlCycle.objects.all()
+    if settings.SYNTHETIC_ONLY:
+        queryset = queryset.filter(is_synthetic=True)
+    cycle = get_object_or_404(queryset, pk=pk)
+    reconciliation_rows = list(cycle.rows.select_related("sku"))
+
+    stages = [
+        {"key": "factory", "label": "Factory", "field": "work_in_process_quantity", "date": "next_factory_completion", "source": "P07"},
+        {"key": "rts", "label": "Ready to ship", "field": "factory_available_inventory", "date": "next_factory_release", "source": "P07"},
+        {"key": "staged", "label": "Staged", "field": None, "date": None, "source": "Not modeled"},
+        {"key": "waterborne", "label": "Waterborne / inbound", "field": "confirmed_on_time_inbound", "date": "next_eta", "source": "P08"},
+        {"key": "port", "label": "Port", "field": None, "date": "next_customs_clearance", "source": "P08 milestone"},
+        {"key": "rjw", "label": "RJW", "field": "rjw_physical_inventory", "date": None, "source": "P08"},
+        {"key": "dc", "label": "Walmart FC/DC", "field": "ecomm_on_hand_inventory", "date": None, "source": "P03"},
+        {"key": "stores", "label": "Walmart stores", "field": "store_on_hand", "date": None, "source": "P01"},
+        {"key": "sales", "label": "Sales", "field": "store_pos_units", "date": None, "source": "P01 + P02"},
+    ]
+    for stage in stages:
+        if stage["key"] == "sales":
+            store_sales = _sum_known(reconciliation_rows, "store_pos_units")
+            ecomm_sales = _sum_known(reconciliation_rows, "ecomm_units")
+            known = [value for value in (store_sales, ecomm_sales) if value is not None]
+            stage["units"] = sum(known, Decimal("0")) if known else None
+            stage["known_count"] = sum(
+                1 for row in reconciliation_rows
+                if row.store_pos_units is not None or row.ecomm_units is not None
+            )
+        elif stage["field"]:
+            stage["units"] = _sum_known(reconciliation_rows, stage["field"])
+            stage["known_count"] = sum(
+                1 for row in reconciliation_rows if getattr(row, stage["field"]) is not None
+            )
+        else:
+            stage["units"] = None
+            stage["known_count"] = sum(
+                1 for row in reconciliation_rows
+                if stage["date"] and getattr(row, stage["date"]) is not None
+            )
+        stage["missing_count"] = len(reconciliation_rows) - stage["known_count"]
+
+    route_rows = []
+    mapping_counts = {"CONFIRMED": 0, "PROVISIONAL": 0, "UNRESOLVED": 0}
+    for row in reconciliation_rows:
+        mapping_status, confidence, mapping_evidence = _mapping_summary(row.sku)
+        mapping_counts[mapping_status] += 1
+        physical_fields = {
+            "factory": row.work_in_process_quantity,
+            "rts": row.factory_available_inventory,
+            "staged": None,
+            "waterborne": row.confirmed_on_time_inbound,
+            "port": row.next_customs_clearance,
+            "rjw": row.rjw_physical_inventory,
+            "dc": row.ecomm_on_hand_inventory,
+            "stores": row.store_on_hand,
+            "sales": row.store_pos_units if row.store_pos_units is not None else row.ecomm_units,
+        }
+        known_stages = " ".join(key for key, value in physical_fields.items() if value is not None)
+        warnings = []
+        if row.confirmed_on_time_inbound and row.rjw_physical_inventory is None:
+            warnings.append("Inbound is recorded but RJW physical inventory is not confirmed.")
+        if row.rjw_physical_inventory is not None and row.ecomm_on_hand_inventory is None and row.store_on_hand is None:
+            warnings.append("RJW inventory is present but no Walmart inventory position is loaded.")
+        if row.next_eta and not row.next_customs_clearance:
+            warnings.append("ETA is present but the customs/port milestone is missing.")
+        if mapping_status != "CONFIRMED":
+            warnings.append("Item identifier mapping requires review before automated reconciliation.")
+        route_rows.append({
+            "row": row,
+            "mapping_status": mapping_status,
+            "confidence": confidence,
+            "mapping_evidence": mapping_evidence,
+            "known_stages": known_stages,
+            "warnings": warnings,
+        })
+
+    mapping_entries = list(cycle.mapping_entries.all())
+    for entry in mapping_entries:
+        mapping_counts[entry.status] += 1
+
+    commitments = [
+        {"label": "Production", "units": _sum_known(reconciliation_rows, "work_in_process_quantity"), "source": "P07"},
+        {"label": "Confirmed inbound", "units": _sum_known(reconciliation_rows, "confirmed_on_time_inbound"), "source": "P08"},
+        {"label": "Walmart commitments", "units": _sum_known(reconciliation_rows, "current_commitments"), "source": "P06/P08"},
+        {"label": "Order forecast", "units": _sum_known(reconciliation_rows, "order_forecast_total"), "source": "P05"},
+        {"label": "Store demand", "units": _sum_known(reconciliation_rows, "forecast_demand_4w"), "source": "P04 · 4 weeks"},
+    ]
+    geo_locations = []
+    geo_segments = []
+    if cycle.is_synthetic:
+        geo_locations = [
+            {"id": "factory", "name": "Synthetic factory", "kind": "Factory", "stage": "factory", "coordinates": [113.2644, 23.1291], "status": "confirmed", "note": "Illustrative Guangdong location—not an operational address."},
+            {"id": "origin-port", "name": "Synthetic origin port", "kind": "Port", "stage": "port", "coordinates": [114.2700, 22.5800], "status": "confirmed", "note": "Illustrative export milestone."},
+            {"id": "destination-port", "name": "Synthetic destination port", "kind": "Port", "stage": "port", "coordinates": [-118.1900, 33.7500], "status": "confirmed", "note": "Illustrative import milestone."},
+            {"id": "rjw", "name": "Synthetic RJW warehouse", "kind": "3PL", "stage": "rjw", "coordinates": [-90.2000, 38.6300], "status": "provisional", "note": "Made-up demonstration coordinate."},
+            {"id": "walmart-dc", "name": "Synthetic Walmart DC", "kind": "Walmart DC", "stage": "dc", "coordinates": [-93.1000, 35.3000], "status": "provisional", "note": "Made-up demonstration coordinate."},
+        ]
+        geo_segments = [
+            {"name": "Factory to origin port", "status": "confirmed", "coordinates": [[113.2644, 23.1291], [114.2700, 22.5800]]},
+            {"name": "Pacific shipment", "status": "confirmed", "coordinates": [[114.2700, 22.5800], [179.0, 30.0]]},
+            {"name": "Pacific shipment", "status": "confirmed", "coordinates": [[-179.0, 30.0], [-118.1900, 33.7500]]},
+            {"name": "Port to synthetic RJW", "status": "provisional", "coordinates": [[-118.1900, 33.7500], [-90.2000, 38.6300]]},
+            {"name": "Synthetic RJW to Walmart DC", "status": "provisional", "coordinates": [[-90.2000, 38.6300], [-93.1000, 35.3000]]},
+        ]
+    unmapped_locations = [
+        "Staged inventory location",
+        "Individual Walmart stores",
+    ] if cycle.is_synthetic else [
+        "Factory and ready-to-ship origin",
+        "Origin and destination ports",
+        "RJW warehouse facilities",
+        "Walmart DC and FC destinations",
+        "Individual Walmart stores",
+    ]
+    return render(request, "controls/route_control.html", {
+        "cycle": cycle,
+        "stages": stages,
+        "commitments": commitments,
+        "route_rows": route_rows,
+        "mapping_entries": mapping_entries,
+        "mapping_counts": mapping_counts,
+        "mapping_total": len(reconciliation_rows) + len(mapping_entries),
+        "geo_locations": geo_locations,
+        "geo_segments": geo_segments,
+        "unmapped_locations": unmapped_locations,
     })
 
 

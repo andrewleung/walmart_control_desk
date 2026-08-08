@@ -6,7 +6,7 @@ from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from controls.models import ControlCycle, PackageUpload
+from controls.models import ControlCycle, ItemMappingEntry, PackageUpload
 from controls.services import process_upload, run_controls
 
 
@@ -49,6 +49,7 @@ class Command(BaseCommand):
         cycle.uploads.all().delete()
         cycle.rows.all().delete()
         cycle.exceptions.all().delete()
+        cycle.mapping_entries.all().delete()
 
         for package_number, filename in sources:
             path = source_root / filename
@@ -70,6 +71,26 @@ class Command(BaseCommand):
             self.stdout.write(f"Package {package_number}: populated ({upload.row_count} rows)")
 
         run_controls(cycle)
+        ItemMappingEntry.objects.bulk_create([
+            ItemMappingEntry(
+                cycle=cycle,
+                internal_sku="DEMO-PROVISIONAL",
+                proposed_alias="DEMO-PROV-ALIAS",
+                gtin="00000000000019",
+                status="PROVISIONAL",
+                confidence="MEDIUM",
+                evidence="Synthetic internal SKU and GTIN candidate agree, but no Walmart Item Number is established.",
+                required_action="Confirm the Walmart Item Number from Supplier One or a PO, then approve the alias.",
+            ),
+            ItemMappingEntry(
+                cycle=cycle,
+                internal_sku="DEMO-UNRESOLVED",
+                status="UNRESOLVED",
+                confidence="LOW",
+                evidence="Synthetic factory or warehouse reference only; no Walmart Item Number, GTIN, or approved alias.",
+                required_action="Locate an independent catalog or PO identifier, or document that the SKU is not a Walmart item.",
+            ),
+        ])
         self.stdout.write(self.style.SUCCESS(
             f"Synthetic demo ready: {cycle.status}, {cycle.rows.count()} items, "
             f"{cycle.exceptions.count()} exception(s)."

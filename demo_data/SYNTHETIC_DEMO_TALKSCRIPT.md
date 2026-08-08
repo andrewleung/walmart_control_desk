@@ -38,6 +38,23 @@ Use this formula:
 
 `Projected gap = usable supply + confirmed on-time inbound - current commitments - approved buffer`
 
+Before opening the quantified schedule, select **Route control**.
+
+“The route view separates physical positions from commitments. It also shows
+three confirmed item configurations, one provisional identifier and one
+unresolved controlled entry. The two mapping examples are deliberately excluded
+from supply calculations: they demonstrate why identifier evidence must be
+approved before records are matched automatically.”
+
+Open **DEMO-PROVISIONAL** and **DEMO-UNRESOLVED** in the Mapping Review Queue.
+
+Select **Geography**.
+
+“The geographic view answers where a supported handoff is located. Every pin in
+this demonstration is synthetic. Solid green lines represent recorded demo
+links; dashed amber lines are provisional. Clicking a marker filters the same
+supporting item grid, while unlocated stages remain listed beneath the map.”
+
 ### 4. Three illustrative outcomes
 
 **DEMO-SURPLUS**

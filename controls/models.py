@@ -79,6 +79,33 @@ class SKU(models.Model):
         return self.vendor_stock_id
 
 
+class ItemMappingEntry(models.Model):
+    STATUS_CHOICES = [
+        ("PROVISIONAL", "Provisional"),
+        ("UNRESOLVED", "Unresolved"),
+    ]
+    CONFIDENCE_CHOICES = [
+        ("MEDIUM", "Medium"),
+        ("LOW", "Low"),
+    ]
+    cycle = models.ForeignKey(ControlCycle, on_delete=models.CASCADE, related_name="mapping_entries")
+    internal_sku = models.CharField(max_length=80)
+    proposed_alias = models.CharField(max_length=80, blank=True)
+    walmart_item_number = models.CharField(max_length=40, blank=True)
+    gtin = models.CharField(max_length=40, blank=True)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES)
+    confidence = models.CharField(max_length=8, choices=CONFIDENCE_CHOICES)
+    evidence = models.TextField()
+    required_action = models.TextField()
+
+    class Meta:
+        unique_together = [("cycle", "internal_sku")]
+        ordering = ["status", "internal_sku"]
+
+    def __str__(self):
+        return f"{self.internal_sku} · {self.get_status_display()}"
+
+
 class ReconciliationRow(models.Model):
     DECISION_CHOICES = [
         ("BLOCKED", "Blocked"),

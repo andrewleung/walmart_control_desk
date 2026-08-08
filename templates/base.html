@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Walmart Control Desk{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'app.css' %}">
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
   <header class="topbar">
@@ -24,5 +25,6 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="footer">{% if demo_read_only %}Synthetic demonstration · Read-only · Not for operational use{% else %}Local MVP · Source files retained · No external connections{% endif %}</footer>
+  {% block extra_script %}{% endblock %}
 </body>
 </html>

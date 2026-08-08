@@ -14,6 +14,23 @@
 <div class="synthetic-banner">SYNTHETIC DEMONSTRATION DATA — NOT FOR OPERATIONAL USE</div>
 {% endif %}
 
+<section class="panel item-route-panel">
+  <div class="panel-head"><div><span class="eyebrow">SINGLE-ITEM ROUTE</span><h2>Evidence strip</h2></div><a class="text-link" href="{% url 'controls:route_control' row.cycle_id %}">Aggregate route →</a></div>
+  <div class="item-route-strip">
+    <div class="item-route-node {% if row.work_in_process_quantity == None and row.factory_available_inventory == None %}unknown{% endif %}"><span>Factory</span><b>{% if row.factory_available_inventory != None %}{{ row.factory_available_inventory|floatformat:0 }} RTS{% elif row.work_in_process_quantity != None %}{{ row.work_in_process_quantity|floatformat:0 }} WIP{% else %}No record{% endif %}</b></div>
+    <i>›</i>
+    <div class="item-route-node {% if row.confirmed_on_time_inbound == None %}unknown{% endif %}"><span>Inbound</span><b>{{ row.confirmed_on_time_inbound|floatformat:0|default:"No record" }}</b></div>
+    <i>›</i>
+    <div class="item-route-node {% if row.rjw_physical_inventory == None %}unknown{% endif %}"><span>RJW</span><b>{{ row.rjw_physical_inventory|floatformat:0|default:"No record" }}</b></div>
+    <i>›</i>
+    <div class="item-route-node {% if row.ecomm_on_hand_inventory == None and row.store_on_hand == None %}unknown{% endif %}"><span>Walmart inventory</span><b>{% if row.ecomm_on_hand_inventory != None %}{{ row.ecomm_on_hand_inventory|floatformat:0 }} FC{% elif row.store_on_hand != None %}{{ row.store_on_hand|floatformat:0 }} stores{% else %}No record{% endif %}</b></div>
+    <i>›</i>
+    <div class="item-route-node {% if row.store_pos_units == None and row.ecomm_units == None %}unknown{% endif %}"><span>Sales</span><b>{% if row.store_pos_units != None %}{{ row.store_pos_units|floatformat:0 }} store{% elif row.ecomm_units != None %}{{ row.ecomm_units|floatformat:0 }} eComm{% else %}No record{% endif %}</b></div>
+  </div>
+  {% if row.confirmed_on_time_inbound != None and row.rjw_physical_inventory == None %}<div class="route-warning"><b>Receiving evidence is incomplete</b><span>Inbound is recorded, but the RJW physical position has not been matched.</span></div>{% endif %}
+  {% if row.rjw_physical_inventory != None and row.ecomm_on_hand_inventory == None and row.store_on_hand == None %}<div class="route-warning"><b>Walmart receipt or inventory evidence is missing</b><span>RJW inventory is present, but no Walmart inventory position is loaded for this item.</span></div>{% endif %}
+</section>
+
 <section class="panel">
   <div class="panel-head"><div><span class="eyebrow">SUPPLY COMPOSITION</span><h2>What is available</h2></div></div>
   <div class="calculation-grid">

@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from openpyxl import load_workbook
 
-from .models import ControlCycle, ReconciliationRow, SKU
+from .models import ControlCycle, ItemMappingEntry, ReconciliationRow, SKU
 from .services import run_controls
 
 
@@ -50,8 +50,15 @@ class ControlGateTests(TestCase):
             self.client.get(reverse("controls:cycle_detail", args=[self.cycle.pk])).status_code,
             200,
         )
+        route = self.client.get(reverse("controls:route_control", args=[self.cycle.pk]))
+        self.assertEqual(route.status_code, 200)
+        self.assertContains(route, "Aggregate evidence by stage")
+        self.assertContains(route, "Geography")
+        self.assertContains(route, "No operational coordinates are plotted")
+        self.assertContains(route, "Unresolved entries")
         detail = self.client.get(reverse("controls:update_decision", args=[self.row.pk]))
         self.assertEqual(detail.status_code, 200)
+        self.assertContains(detail, "SINGLE-ITEM ROUTE")
         self.assertContains(detail, "Projected-gap calculation")
         response = self.client.get(reverse("controls:export_excel", args=[self.cycle.pk]))
         self.assertEqual(response.status_code, 200)
@@ -110,6 +117,32 @@ class ControlGateTests(TestCase):
         self.assertContains(detail, "Six forward-decision analyses")
         self.assertContains(detail, "52.3 weeks")
         self.assertContains(detail, "210 incremental stores")
+
+    def test_mapping_review_entries_are_separate_from_decision_rows(self):
+        ItemMappingEntry.objects.create(
+            cycle=self.cycle,
+            internal_sku="DEMO-PROVISIONAL",
+            proposed_alias="DEMO-ALIAS",
+            gtin="00000000000019",
+            status="PROVISIONAL",
+            confidence="MEDIUM",
+            evidence="Candidate identifier only.",
+            required_action="Confirm the Walmart item number.",
+        )
+        ItemMappingEntry.objects.create(
+            cycle=self.cycle,
+            internal_sku="DEMO-UNRESOLVED",
+            status="UNRESOLVED",
+            confidence="LOW",
+            evidence="No independent identifier.",
+            required_action="Locate catalog evidence.",
+        )
+        route = self.client.get(reverse("controls:route_control", args=[self.cycle.pk]))
+        self.assertContains(route, "DEMO-PROVISIONAL")
+        self.assertContains(route, "DEMO-UNRESOLVED")
+        self.assertContains(route, "Identifiers outside the decision schedule")
+        self.assertNotContains(route, "Synthetic factory")
+        self.assertEqual(self.cycle.rows.count(), 1)
 
     @override_settings(DEMO_READ_ONLY=True, SYNTHETIC_ONLY=True)
     def test_public_demo_hides_real_cycle_and_blocks_changes(self):

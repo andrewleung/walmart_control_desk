@@ -62,7 +62,23 @@ packages remain visible and prevent a final supply conclusion.
 6. Record Jessica's status and notes per item.
 7. Export the Excel schedule or print the management report to PDF.
 
-Uploaded data stays in `data/` on the local computer. No external service is used.
+## Route-control MVP
+
+Each cycle includes a **Route control** view that separates physical positions
+from plans and commitments. The aggregate stage cards filter a supporting item
+grid; each item calculation also includes a compact evidence strip and localized
+warnings for unproven handoffs. Identifier coverage is summarized as confirmed,
+provisional, or unresolved for the items loaded into that cycle.
+
+The first version is server-rendered HTML, CSS, and a small amount of plain
+JavaScript. It intentionally does not introduce a frontend build system or
+`node_modules`. The synthetic cycle includes an optional MapLibre geography tab
+with explicitly made-up coordinates; operational cycles do not plot pins until
+an approved location master exists.
+
+Uploaded data stays in `data/` on the local computer and is not sent to the map
+provider. The optional geography tab downloads the MapLibre library and public
+demonstration tiles from the internet; the reconciliation itself remains local.
 
 ## Synthetic complete-workflow demonstration
 

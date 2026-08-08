@@ -9,6 +9,7 @@
     <p>Cutoff {{ cycle.cutoff_at|date:"d M Y, H:i" }} · Prepared by Jessica</p>
   </div>
   <div class="hero-actions">
+    <a class="button ghost" href="{% url 'controls:route_control' cycle.pk %}">Route control</a>
     <a class="button ghost" href="{% url 'controls:print_report' cycle.pk %}" target="_blank">Print / PDF</a>
     <a class="button ghost" href="{% url 'controls:export_excel' cycle.pk %}">Export Excel</a>
     {% if not demo_read_only %}<form method="post" action="{% url 'controls:run_reconciliation' cycle.pk %}">{% csrf_token %}<button class="button primary" type="submit">Run controls</button></form>{% endif %}
