@@ -34,6 +34,8 @@ a { color: inherit; }
 .video-next-step b, .video-next-step span { display: block; }
 .video-next-step span { margin-top: 3px; color: var(--muted); font-size: .84rem; }
 .video-disclosure { margin: 16px auto 0; max-width: 850px; font-size: .75rem; text-align: center; }
+.video-quick-link { margin: 14px 0 0; font-size: .82rem; text-align: center; }
+.video-quick-link a { color: var(--green); font-weight: 750; }
 @media (max-width: 680px) { .video-next-step { align-items: stretch; flex-direction: column; } .video-next-step .button { width: 100%; } }
 .eyebrow { margin-bottom: 8px; color: var(--green); font-size: .71rem; font-weight: 800; letter-spacing: .14em; }
 h1, h2, h3 { font-family: Georgia, serif; line-height: 1.12; }

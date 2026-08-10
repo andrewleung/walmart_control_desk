@@ -10,13 +10,13 @@ The Render deployment is a public, read-only demonstration containing only the
 made-up complete-workflow cycle. Operational source files and the real partial-data
 trial are excluded from the deployment repository.
 
-## 30-second MapLibre demonstration
+## Beginner-oriented guided demonstration
 
-[![Play the 30-second Walmart Control MapLibre demonstration](docs/media/Walmart_Control_MapLibre_Poster.jpg)](https://walmart-control-synthetic-demo.onrender.com/demo/)
+[![Play the Walmart Control beginner guide](docs/media/Walmart_Control_MapLibre_Poster.jpg)](https://walmart-control-synthetic-demo.onrender.com/demo/)
 
-**[Play the 30-second guided demonstration](https://walmart-control-synthetic-demo.onrender.com/demo/)** — see how 9 input packages reveal 3 illustrative item outcomes and 2 mapping exceptions.
+**[Play the one-minute beginner guide](https://walmart-control-synthetic-demo.onrender.com/demo/)** — start with one practical supply decision, follow a 350-unit shortage calculation, and end with a focused action list.
 
-**[播放 30 秒简体中文引导演示](https://walmart-control-synthetic-demo.onrender.com/demo/zh-cn/)**
+**[播放一分钟简体中文入门演示](https://walmart-control-synthetic-demo.onrender.com/demo/zh-cn/)**
 
 **[Open the interactive synthetic demo](https://walmart-control-synthetic-demo.onrender.com/)**
 

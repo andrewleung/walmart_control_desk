@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block html_lang %}{% if page_language == "zh-cn" %}zh-CN{% else %}en{% endif %}{% endblock %}
-{% block title %}{% if page_language == "zh-cn" %}30 秒引导演示{% else %}30-second guided demonstration{% endif %} · Walmart Control Desk{% endblock %}
+{% block title %}{% if page_language == "zh-cn" %}一分钟入门演示{% else %}One-minute beginner guide{% endif %} · Walmart Control Desk{% endblock %}
 
 {% block content %}
   <section class="video-page">
@@ -13,26 +13,30 @@
 
     {% if page_language == "zh-cn" %}
       <a class="back" href="{% url 'controls:dashboard' %}">← 打开互动演示</a>
-      <div class="eyebrow">30 秒引导演示</div>
-      <h1>从工厂到沃尔玛，一览供应流程。</h1>
-      <p class="video-introduction">这个模拟示例连接 9 个输入数据包，并区分 3 种商品结果：供应充足、预计短缺和到货延迟。点击播放，查看流程如何持续显示 2 项尚未确认的映射。</p>
-      {% static 'media/Walmart_Control_MapLibre_30s_Promo_zh-CN.mp4' as video_source %}
-      {% static 'media/Walmart_Control_MapLibre_Poster.jpg' as poster_source %}
+      <div class="eyebrow">一分钟入门演示</div>
+      <h1>Jessica 是否应该批准增加供应？</h1>
+      <p class="video-introduction">本指南从这个实际问题开始，以一个预计短缺 350 件的商品为例，说明系统如何检查数量、到货时间和数据可信度，并形成清晰的行动清单。</p>
+      {% static 'media/Walmart_Control_Beginner_Guide_zh-CN.mp4' as video_source %}
+      {% static 'media/Walmart_Control_Beginner_Guide_zh-CN_Poster.jpg' as poster_source %}
+      {% static 'media/Walmart_Control_MapLibre_30s_Promo_zh-CN.mp4' as quick_video_source %}
     {% else %}
       <a class="back" href="{% url 'controls:dashboard' %}">← Open the interactive demonstration</a>
-      <div class="eyebrow">30-SECOND GUIDED DEMONSTRATION</div>
-      <h1>See the supply journey from factory to Walmart.</h1>
-      <p class="video-introduction">This synthetic example connects 9 input packages and separates 3 item outcomes: covered surplus, projected shortage, and late inbound. Press Play to see how the workflow also keeps 2 unconfirmed mappings visible.</p>
-      {% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' as video_source %}
-      {% static 'media/Walmart_Control_MapLibre_Poster.jpg' as poster_source %}
+      <div class="eyebrow">ONE-MINUTE BEGINNER GUIDE</div>
+      <h1>Should Jessica authorize more supply?</h1>
+      <p class="video-introduction">This guide starts with that practical question. Using one item projected 350 units short, it explains how the system checks quantity, timing and data confidence before producing a focused action list.</p>
+      {% static 'media/Walmart_Control_Beginner_Guide_EN.mp4' as video_source %}
+      {% static 'media/Walmart_Control_Beginner_Guide_EN_Poster.jpg' as poster_source %}
+      {% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' as quick_video_source %}
     {% endif %}
 
     <div class="video-frame">
-      <video controls preload="metadata" playsinline poster="{{ poster_source }}" aria-label="{% if page_language == 'zh-cn' %}Walmart Control Desk 30 秒引导演示{% else %}30-second Walmart Control Desk guided demonstration{% endif %}">
+      <video controls preload="metadata" playsinline poster="{{ poster_source }}" aria-label="{% if page_language == 'zh-cn' %}Walmart Control Desk 一分钟入门演示{% else %}Walmart Control Desk one-minute beginner guide{% endif %}">
         <source src="{{ video_source }}" type="video/mp4">
         {% if page_language == "zh-cn" %}您的浏览器无法播放此视频。<a href="{{ video_source }}">请下载 MP4 文件。</a>{% else %}Your browser cannot play this video. <a href="{{ video_source }}">Download the MP4 instead.</a>{% endif %}
       </video>
     </div>
+
+    <p class="video-quick-link">{% if page_language == "zh-cn" %}已经熟悉本项目？<a href="{{ quick_video_source }}">观看原有 30 秒快速概览</a>。{% else %}Already familiar with the project? <a href="{{ quick_video_source }}">Watch the original 30-second quick overview</a>.{% endif %}</p>
 
     <div class="video-next-step">
       <div>
