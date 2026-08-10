@@ -97,7 +97,7 @@
   {% if route_rows %}
   <div class="table-wrap">
     <table class="data-table route-table" id="route-records">
-      <thead><tr><th>SKU</th><th>Item configuration</th><th>Mapping</th><th>Confidence</th><th>Factory / WIP</th><th>Inbound</th><th>RJW</th><th>Walmart inventory</th><th>Sales</th><th>Warning</th></tr></thead>
+      <thead><tr><th>SKU</th><th>Item configuration</th><th>Mapping</th><th>Confidence</th><th>Factory / WIP</th><th>Inbound</th><th>3PL warehouse</th><th>Walmart inventory</th><th>Sales</th><th>Warning</th></tr></thead>
       <tbody>
       {% for item in route_rows %}
       <tr data-known-stages="{{ item.known_stages }}">

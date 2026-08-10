@@ -48,13 +48,13 @@ class ControlGateTests(TestCase):
         self.assertEqual(self.client.get(reverse("controls:dashboard")).status_code, 200)
         video = self.client.get(reverse("controls:demo_video"))
         self.assertEqual(video.status_code, 200)
-        self.assertContains(video, "Should Jessica authorize more supply?")
-        self.assertContains(video, "projected 350 units short")
+        self.assertContains(video, "Walmart suppliers face a costly decision")
+        self.assertContains(video, "350-unit shortage calculation")
         self.assertContains(video, "Walmart_Control_Beginner_Guide_EN.mp4")
         chinese_video = self.client.get(reverse("controls:demo_video_zh_cn"))
         self.assertEqual(chinese_video.status_code, 200)
-        self.assertContains(chinese_video, "Jessica 是否应该批准增加供应？")
-        self.assertContains(chinese_video, "预计短缺 350 件")
+        self.assertContains(chinese_video, "沃尔玛供应商面对代价高昂的决策")
+        self.assertContains(chinese_video, "350 件预计短缺计算")
         self.assertContains(chinese_video, "Walmart_Control_Beginner_Guide_zh-CN.mp4")
         self.assertEqual(
             self.client.get(reverse("controls:cycle_detail", args=[self.cycle.pk])).status_code,

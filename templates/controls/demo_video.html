@@ -14,16 +14,16 @@
     {% if page_language == "zh-cn" %}
       <a class="back" href="{% url 'controls:dashboard' %}">← 打开互动演示</a>
       <div class="eyebrow">一分钟入门演示</div>
-      <h1>Jessica 是否应该批准增加供应？</h1>
-      <p class="video-introduction">本指南从这个实际问题开始，以一个预计短缺 350 件的商品为例，说明系统如何检查数量、到货时间和数据可信度，并形成清晰的行动清单。</p>
+      <h1>沃尔玛供应商面对代价高昂的决策。</h1>
+      <p class="video-introduction">问题通常不是缺少数据，而是不确定工厂商品、第三方仓库库存、沃尔玛订单和销售是否正确关联。本指南通过地图、商品明细和 350 件预计短缺计算，说明如何把不确定性转化为行动。</p>
       {% static 'media/Walmart_Control_Beginner_Guide_zh-CN.mp4' as video_source %}
       {% static 'media/Walmart_Control_Beginner_Guide_zh-CN_Poster.jpg' as poster_source %}
       {% static 'media/Walmart_Control_MapLibre_30s_Promo_zh-CN.mp4' as quick_video_source %}
     {% else %}
       <a class="back" href="{% url 'controls:dashboard' %}">← Open the interactive demonstration</a>
       <div class="eyebrow">ONE-MINUTE BEGINNER GUIDE</div>
-      <h1>Should Jessica authorize more supply?</h1>
-      <p class="video-introduction">This guide starts with that practical question. Using one item projected 350 units short, it explains how the system checks quantity, timing and data confidence before producing a focused action list.</p>
+      <h1>Walmart suppliers face a costly decision.</h1>
+      <p class="video-introduction">The problem is often not missing data, but uncertainty over whether factory items, 3PL stock, Walmart orders and sales are correctly connected. This guide uses the map, item drill-down and a 350-unit shortage calculation to turn that uncertainty into action.</p>
       {% static 'media/Walmart_Control_Beginner_Guide_EN.mp4' as video_source %}
       {% static 'media/Walmart_Control_Beginner_Guide_EN_Poster.jpg' as poster_source %}
       {% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' as quick_video_source %}

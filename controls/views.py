@@ -88,7 +88,7 @@ def route_control(request, pk):
         {"key": "staged", "label": "Staged", "field": None, "date": None, "source": "Not modeled"},
         {"key": "waterborne", "label": "Waterborne / inbound", "field": "confirmed_on_time_inbound", "date": "next_eta", "source": "P08"},
         {"key": "port", "label": "Port", "field": None, "date": "next_customs_clearance", "source": "P08 milestone"},
-        {"key": "rjw", "label": "RJW", "field": "rjw_physical_inventory", "date": None, "source": "P08"},
+        {"key": "rjw", "label": "3PL warehouse (RJW)", "field": "rjw_physical_inventory", "date": None, "source": "P08"},
         {"key": "dc", "label": "Walmart FC/DC", "field": "ecomm_on_hand_inventory", "date": None, "source": "P03"},
         {"key": "stores", "label": "Walmart stores", "field": "store_on_hand", "date": None, "source": "P01"},
         {"key": "sales", "label": "Sales", "field": "store_pos_units", "date": None, "source": "P01 + P02"},
@@ -135,9 +135,9 @@ def route_control(request, pk):
         known_stages = " ".join(key for key, value in physical_fields.items() if value is not None)
         warnings = []
         if row.confirmed_on_time_inbound and row.rjw_physical_inventory is None:
-            warnings.append("Inbound is recorded but RJW physical inventory is not confirmed.")
+            warnings.append("Inbound is recorded but the 3PL warehouse physical inventory is not confirmed.")
         if row.rjw_physical_inventory is not None and row.ecomm_on_hand_inventory is None and row.store_on_hand is None:
-            warnings.append("RJW inventory is present but no Walmart inventory position is loaded.")
+            warnings.append("3PL warehouse inventory is present but no Walmart inventory position is loaded.")
         if row.next_eta and not row.next_customs_clearance:
             warnings.append("ETA is present but the customs/port milestone is missing.")
         if mapping_status != "CONFIRMED":
@@ -169,15 +169,15 @@ def route_control(request, pk):
             {"id": "factory", "name": "Synthetic factory", "kind": "Factory", "stage": "factory", "coordinates": [113.2644, 23.1291], "status": "confirmed", "note": "Illustrative Guangdong location—not an operational address."},
             {"id": "origin-port", "name": "Synthetic origin port", "kind": "Port", "stage": "port", "coordinates": [114.2700, 22.5800], "status": "confirmed", "note": "Illustrative export milestone."},
             {"id": "destination-port", "name": "Synthetic destination port", "kind": "Port", "stage": "port", "coordinates": [-118.1900, 33.7500], "status": "confirmed", "note": "Illustrative import milestone."},
-            {"id": "rjw", "name": "Synthetic RJW warehouse", "kind": "3PL", "stage": "rjw", "coordinates": [-90.2000, 38.6300], "status": "provisional", "note": "Made-up demonstration coordinate."},
+            {"id": "rjw", "name": "Synthetic 3PL warehouse (RJW)", "kind": "3PL warehouse", "stage": "rjw", "coordinates": [-90.2000, 38.6300], "status": "provisional", "note": "Made-up demonstration coordinate."},
             {"id": "walmart-dc", "name": "Synthetic Walmart DC", "kind": "Walmart DC", "stage": "dc", "coordinates": [-93.1000, 35.3000], "status": "provisional", "note": "Made-up demonstration coordinate."},
         ]
         geo_segments = [
             {"name": "Factory to origin port", "status": "confirmed", "coordinates": [[113.2644, 23.1291], [114.2700, 22.5800]]},
             {"name": "Pacific shipment", "status": "confirmed", "coordinates": [[114.2700, 22.5800], [179.0, 30.0]]},
             {"name": "Pacific shipment", "status": "confirmed", "coordinates": [[-179.0, 30.0], [-118.1900, 33.7500]]},
-            {"name": "Port to synthetic RJW", "status": "provisional", "coordinates": [[-118.1900, 33.7500], [-90.2000, 38.6300]]},
-            {"name": "Synthetic RJW to Walmart DC", "status": "provisional", "coordinates": [[-90.2000, 38.6300], [-93.1000, 35.3000]]},
+            {"name": "Port to synthetic 3PL warehouse", "status": "provisional", "coordinates": [[-118.1900, 33.7500], [-90.2000, 38.6300]]},
+            {"name": "Synthetic 3PL warehouse to Walmart DC", "status": "provisional", "coordinates": [[-90.2000, 38.6300], [-93.1000, 35.3000]]},
         ]
     unmapped_locations = [
         "Staged inventory location",
@@ -185,7 +185,7 @@ def route_control(request, pk):
     ] if cycle.is_synthetic else [
         "Factory and ready-to-ship origin",
         "Origin and destination ports",
-        "RJW warehouse facilities",
+        "3PL warehouse facilities",
         "Walmart DC and FC destinations",
         "Individual Walmart stores",
     ]

@@ -14,7 +14,7 @@ trial are excluded from the deployment repository.
 
 [![Play the Walmart Control beginner guide](docs/media/Walmart_Control_MapLibre_Poster.jpg)](https://walmart-control-synthetic-demo.onrender.com/demo/)
 
-**[Play the one-minute beginner guide](https://walmart-control-synthetic-demo.onrender.com/demo/)** — start with one practical supply decision, follow a 350-unit shortage calculation, and end with a focused action list.
+**[Play the one-minute beginner guide](https://walmart-control-synthetic-demo.onrender.com/demo/)** — start with the supplier’s risk and uncertain item links, then use the map, item drill-down and a 350-unit shortage calculation to reach a focused action list.
 
 **[播放一分钟简体中文入门演示](https://walmart-control-synthetic-demo.onrender.com/demo/zh-cn/)**
 
