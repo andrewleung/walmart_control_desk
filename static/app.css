@@ -28,6 +28,7 @@ a { color: inherit; }
 .language-switch a.active { background: var(--green); color: white; }
 .video-page h1 { max-width: 920px; font-size: clamp(2.2rem, 5vw, 3.8rem); }
 .video-introduction { max-width: 850px; margin: 0 0 28px; font-size: 1.05rem; }
+.video-audio-note { width: fit-content; margin: -10px 0 18px; padding: 8px 12px; border-radius: 9px; background: var(--green-soft); color: var(--green); font-size: .78rem; font-weight: 700; }
 .video-frame { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #132f27; box-shadow: 0 18px 50px rgba(24,35,29,.12); }
 .video-frame video { width: 100%; display: block; aspect-ratio: 16 / 9; background: #132f27; }
 .video-next-step { margin-top: 18px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }

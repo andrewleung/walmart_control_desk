@@ -29,6 +29,8 @@
       {% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' as quick_video_source %}
     {% endif %}
 
+    <p class="video-audio-note">{% if page_language == "zh-cn" %}🔊 本视频包含普通话旁白。您可以使用播放器控制音量、暂停或继续播放。{% else %}🔊 This video includes English narration. Use the player to adjust volume, pause, or resume.{% endif %}</p>
+
     <div class="video-frame">
       <video controls preload="metadata" playsinline poster="{{ poster_source }}" aria-label="{% if page_language == 'zh-cn' %}Walmart Control Desk 一分钟入门演示{% else %}Walmart Control Desk one-minute beginner guide{% endif %}">
         <source src="{{ video_source }}" type="video/mp4">
