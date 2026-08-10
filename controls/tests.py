@@ -46,6 +46,10 @@ class ControlGateTests(TestCase):
 
     def test_main_pages_and_export_render(self):
         self.assertEqual(self.client.get(reverse("controls:dashboard")).status_code, 200)
+        video = self.client.get(reverse("controls:demo_video"))
+        self.assertEqual(video.status_code, 200)
+        self.assertContains(video, "Press Play to begin")
+        self.assertContains(video, "Walmart_Control_MapLibre_30s_Promo.mp4")
         self.assertEqual(
             self.client.get(reverse("controls:cycle_detail", args=[self.cycle.pk])).status_code,
             200,

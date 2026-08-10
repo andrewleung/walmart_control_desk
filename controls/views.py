@@ -39,6 +39,10 @@ def dashboard(request):
     return render(request, "controls/dashboard.html", {"cycles": cycles})
 
 
+def demo_video(request):
+    return render(request, "controls/demo_video.html")
+
+
 def cycle_create(request):
     if settings.DEMO_READ_ONLY:
         return HttpResponseForbidden("This public synthetic demonstration is read-only.")

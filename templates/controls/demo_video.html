@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}30-second guided demonstration · Walmart Control Desk{% endblock %}
+
+{% block content %}
+  <section class="video-page">
+    <a class="back" href="{% url 'controls:dashboard' %}">← Open the interactive demonstration</a>
+    <div class="eyebrow">30-SECOND GUIDED DEMONSTRATION</div>
+    <h1>See the supply journey from factory to Walmart.</h1>
+    <p class="video-introduction">Follow the physical route, open the supporting evidence, and identify links that still need confirmation. Press Play to begin; the video stops when the walkthrough is complete.</p>
+
+    <div class="video-frame">
+      <video controls preload="metadata" playsinline poster="{% static 'media/Walmart_Control_MapLibre_Poster.jpg' %}" aria-label="30-second Walmart Control Desk guided demonstration">
+        <source src="{% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' %}" type="video/mp4">
+        Your browser cannot play this video. <a href="{% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' %}">Download the MP4 instead.</a>
+      </video>
+    </div>
+
+    <div class="video-next-step">
+      <div>
+        <b>Finished watching?</b>
+        <span>Open the synthetic application and explore the same workflow yourself.</span>
+      </div>
+      <a class="button" href="{% url 'controls:dashboard' %}">Explore the demonstration</a>
+    </div>
+
+    <p class="video-disclosure">The video contains only made-up demonstration data and illustrative locations. It contains no operational Walmart, RJW, factory, purchase-order, shipment, inventory, or sales data.</p>
+  </section>
+{% endblock %}

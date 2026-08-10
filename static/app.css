@@ -22,6 +22,16 @@ a { color: inherit; }
 .user-chip span { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #35a36e; }
 .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 80px; }
 .footer { padding: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; text-align: center; }
+.video-page { max-width: 1040px; margin: 0 auto; }
+.video-page h1 { max-width: 920px; font-size: clamp(2.2rem, 5vw, 3.8rem); }
+.video-introduction { max-width: 850px; margin: 0 0 28px; font-size: 1.05rem; }
+.video-frame { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #132f27; box-shadow: 0 18px 50px rgba(24,35,29,.12); }
+.video-frame video { width: 100%; display: block; aspect-ratio: 16 / 9; background: #132f27; }
+.video-next-step { margin-top: 18px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.video-next-step b, .video-next-step span { display: block; }
+.video-next-step span { margin-top: 3px; color: var(--muted); font-size: .84rem; }
+.video-disclosure { margin: 16px auto 0; max-width: 850px; font-size: .75rem; text-align: center; }
+@media (max-width: 680px) { .video-next-step { align-items: stretch; flex-direction: column; } .video-next-step .button { width: 100%; } }
 .eyebrow { margin-bottom: 8px; color: var(--green); font-size: .71rem; font-weight: 800; letter-spacing: .14em; }
 h1, h2, h3 { font-family: Georgia, serif; line-height: 1.12; }
 h1 { max-width: 850px; margin: 0 0 14px; font-size: clamp(2.2rem, 5vw, 4.2rem); font-weight: 500; letter-spacing: -.035em; }

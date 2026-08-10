@@ -12,7 +12,9 @@ trial are excluded from the deployment repository.
 
 ## 30-second MapLibre demonstration
 
-![30-second Walmart Control MapLibre demonstration](docs/media/Walmart_Control_MapLibre_30s_Promo.gif)
+[![Play the 30-second Walmart Control MapLibre demonstration](docs/media/Walmart_Control_MapLibre_Poster.jpg)](https://walmart-control-synthetic-demo.onrender.com/demo/)
+
+**[Play the 30-second guided demonstration](https://walmart-control-synthetic-demo.onrender.com/demo/)** — use the video controls to pause, replay, or view it full screen.
 
 **[Open the interactive synthetic demo](https://walmart-control-synthetic-demo.onrender.com/)**
 
