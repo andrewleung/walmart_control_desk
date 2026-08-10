@@ -5,6 +5,7 @@ app_name = "controls"
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("demo/", views.demo_video, name="demo_video"),
+    path("demo/zh-cn/", views.demo_video, {"language": "zh-cn"}, name="demo_video_zh_cn"),
     path("cycles/new/", views.cycle_create, name="cycle_create"),
     path("cycles/<int:pk>/", views.cycle_detail, name="cycle_detail"),
     path("cycles/<int:pk>/routes/", views.route_control, name="route_control"),

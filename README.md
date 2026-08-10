@@ -16,6 +16,8 @@ trial are excluded from the deployment repository.
 
 **[Play the 30-second guided demonstration](https://walmart-control-synthetic-demo.onrender.com/demo/)** — see how 9 input packages reveal 3 illustrative item outcomes and 2 mapping exceptions.
 
+**[播放 30 秒简体中文引导演示](https://walmart-control-synthetic-demo.onrender.com/demo/zh-cn/)**
+
 **[Open the interactive synthetic demo](https://walmart-control-synthetic-demo.onrender.com/)**
 
 The video and hosted application contain only made-up demonstration data and

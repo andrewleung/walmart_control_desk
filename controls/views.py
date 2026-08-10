@@ -39,8 +39,8 @@ def dashboard(request):
     return render(request, "controls/dashboard.html", {"cycles": cycles})
 
 
-def demo_video(request):
-    return render(request, "controls/demo_video.html")
+def demo_video(request, language="en"):
+    return render(request, "controls/demo_video.html", {"page_language": language})
 
 
 def cycle_create(request):

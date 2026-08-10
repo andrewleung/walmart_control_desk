@@ -1,30 +1,47 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}30-second guided demonstration · Walmart Control Desk{% endblock %}
+{% block html_lang %}{% if page_language == "zh-cn" %}zh-CN{% else %}en{% endif %}{% endblock %}
+{% block title %}{% if page_language == "zh-cn" %}30 秒引导演示{% else %}30-second guided demonstration{% endif %} · Walmart Control Desk{% endblock %}
 
 {% block content %}
   <section class="video-page">
-    <a class="back" href="{% url 'controls:dashboard' %}">← Open the interactive demonstration</a>
-    <div class="eyebrow">30-SECOND GUIDED DEMONSTRATION</div>
-    <h1>See the supply journey from factory to Walmart.</h1>
-    <p class="video-introduction">This synthetic example connects 9 input packages and separates 3 item outcomes: covered surplus, projected shortage, and late inbound. Press Play to see how the workflow also keeps 2 unconfirmed mappings visible.</p>
+    <nav class="language-switch" aria-label="Language selection">
+      <a href="{% url 'controls:demo_video' %}"{% if page_language != "zh-cn" %} class="active" aria-current="page"{% endif %}>English</a>
+      <a href="{% url 'controls:demo_video_zh_cn' %}"{% if page_language == "zh-cn" %} class="active" aria-current="page"{% endif %}>简体中文</a>
+    </nav>
+
+    {% if page_language == "zh-cn" %}
+      <a class="back" href="{% url 'controls:dashboard' %}">← 打开互动演示</a>
+      <div class="eyebrow">30 秒引导演示</div>
+      <h1>从工厂到沃尔玛，一览供应流程。</h1>
+      <p class="video-introduction">这个模拟示例连接 9 个输入数据包，并区分 3 种商品结果：供应充足、预计短缺和到货延迟。点击播放，查看流程如何持续显示 2 项尚未确认的映射。</p>
+      {% static 'media/Walmart_Control_MapLibre_30s_Promo_zh-CN.mp4' as video_source %}
+      {% static 'media/Walmart_Control_MapLibre_Poster.jpg' as poster_source %}
+    {% else %}
+      <a class="back" href="{% url 'controls:dashboard' %}">← Open the interactive demonstration</a>
+      <div class="eyebrow">30-SECOND GUIDED DEMONSTRATION</div>
+      <h1>See the supply journey from factory to Walmart.</h1>
+      <p class="video-introduction">This synthetic example connects 9 input packages and separates 3 item outcomes: covered surplus, projected shortage, and late inbound. Press Play to see how the workflow also keeps 2 unconfirmed mappings visible.</p>
+      {% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' as video_source %}
+      {% static 'media/Walmart_Control_MapLibre_Poster.jpg' as poster_source %}
+    {% endif %}
 
     <div class="video-frame">
-      <video controls preload="metadata" playsinline poster="{% static 'media/Walmart_Control_MapLibre_Poster.jpg' %}" aria-label="30-second Walmart Control Desk guided demonstration">
-        <source src="{% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' %}" type="video/mp4">
-        Your browser cannot play this video. <a href="{% static 'media/Walmart_Control_MapLibre_30s_Promo.mp4' %}">Download the MP4 instead.</a>
+      <video controls preload="metadata" playsinline poster="{{ poster_source }}" aria-label="{% if page_language == 'zh-cn' %}Walmart Control Desk 30 秒引导演示{% else %}30-second Walmart Control Desk guided demonstration{% endif %}">
+        <source src="{{ video_source }}" type="video/mp4">
+        {% if page_language == "zh-cn" %}您的浏览器无法播放此视频。<a href="{{ video_source }}">请下载 MP4 文件。</a>{% else %}Your browser cannot play this video. <a href="{{ video_source }}">Download the MP4 instead.</a>{% endif %}
       </video>
     </div>
 
     <div class="video-next-step">
       <div>
-        <b>Finished watching?</b>
-        <span>Open the synthetic application and explore the same workflow yourself.</span>
+        <b>{% if page_language == "zh-cn" %}观看完毕？{% else %}Finished watching?{% endif %}</b>
+        <span>{% if page_language == "zh-cn" %}打开模拟应用，亲自探索同一套工作流程。{% else %}Open the synthetic application and explore the same workflow yourself.{% endif %}</span>
       </div>
-      <a class="button" href="{% url 'controls:dashboard' %}">Explore the demonstration</a>
+      <a class="button" href="{% url 'controls:dashboard' %}">{% if page_language == "zh-cn" %}探索互动演示{% else %}Explore the demonstration{% endif %}</a>
     </div>
 
-    <p class="video-disclosure">The video contains only made-up demonstration data and illustrative locations. It contains no operational Walmart, RJW, factory, purchase-order, shipment, inventory, or sales data.</p>
+    <p class="video-disclosure">{% if page_language == "zh-cn" %}本视频仅包含虚构的演示数据和示意地点，不包含任何实际的沃尔玛、RJW、工厂、采购订单、运输、库存或销售数据。{% else %}The video contains only made-up demonstration data and illustrative locations. It contains no operational Walmart, RJW, factory, purchase-order, shipment, inventory, or sales data.{% endif %}</p>
   </section>
 {% endblock %}

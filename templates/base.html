@@ -1,6 +1,6 @@
 {% load static %}
 <!doctype html>
-<html lang="en">
+<html lang="{% block html_lang %}en{% endblock %}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,9 +12,9 @@
   <header class="topbar">
     <a class="brand" href="{% url 'controls:dashboard' %}">
       <span class="brand-mark">JC</span>
-      <span><b>Walmart Control Desk</b><small>Jessica’s reconciliation workspace</small></span>
+      <span><b>Walmart Control Desk</b><small>{% if page_language == "zh-cn" %}Jessica 的对账工作区{% else %}Jessica’s reconciliation workspace{% endif %}</small></span>
     </a>
-    <div class="user-chip"><span></span>{% if demo_read_only %}Public synthetic demo · read-only{% else %}Jessica · local{% endif %}</div>
+    <div class="user-chip"><span></span>{% if page_language == "zh-cn" %}{% if demo_read_only %}公开模拟演示 · 只读{% else %}Jessica · 本地{% endif %}{% else %}{% if demo_read_only %}Public synthetic demo · read-only{% else %}Jessica · local{% endif %}{% endif %}</div>
   </header>
   <main class="shell">
     {% if messages %}
@@ -24,7 +24,7 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="footer">{% if demo_read_only %}Synthetic demonstration · Read-only · Not for operational use{% else %}Local MVP · Source files retained · No external connections{% endif %}</footer>
+  <footer class="footer">{% if page_language == "zh-cn" %}{% if demo_read_only %}模拟演示 · 只读 · 不得用于实际运营{% else %}本地 MVP · 保留源文件 · 无外部连接{% endif %}{% else %}{% if demo_read_only %}Synthetic demonstration · Read-only · Not for operational use{% else %}Local MVP · Source files retained · No external connections{% endif %}{% endif %}</footer>
   {% block extra_script %}{% endblock %}
 </body>
 </html>

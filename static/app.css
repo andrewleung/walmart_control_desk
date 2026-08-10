@@ -23,6 +23,9 @@ a { color: inherit; }
 .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 80px; }
 .footer { padding: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; text-align: center; }
 .video-page { max-width: 1040px; margin: 0 auto; }
+.language-switch { width: fit-content; margin: 0 0 24px auto; padding: 4px; display: flex; gap: 3px; border: 1px solid var(--line); border-radius: 999px; background: #efeee8; }
+.language-switch a { padding: 7px 13px; border-radius: 999px; color: var(--muted); font-size: .78rem; font-weight: 750; text-decoration: none; }
+.language-switch a.active { background: var(--green); color: white; }
 .video-page h1 { max-width: 920px; font-size: clamp(2.2rem, 5vw, 3.8rem); }
 .video-introduction { max-width: 850px; margin: 0 0 28px; font-size: 1.05rem; }
 .video-frame { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #132f27; box-shadow: 0 18px 50px rgba(24,35,29,.12); }

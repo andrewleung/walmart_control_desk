@@ -51,6 +51,10 @@ class ControlGateTests(TestCase):
         self.assertContains(video, "connects 9 input packages")
         self.assertContains(video, "2 unconfirmed mappings")
         self.assertContains(video, "Walmart_Control_MapLibre_30s_Promo.mp4")
+        chinese_video = self.client.get(reverse("controls:demo_video_zh_cn"))
+        self.assertEqual(chinese_video.status_code, 200)
+        self.assertContains(chinese_video, "连接 9 个输入数据包")
+        self.assertContains(chinese_video, "Walmart_Control_MapLibre_30s_Promo_zh-CN.mp4")
         self.assertEqual(
             self.client.get(reverse("controls:cycle_detail", args=[self.cycle.pk])).status_code,
             200,
